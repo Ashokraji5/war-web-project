@@ -3,45 +3,51 @@ pipeline {
     tools {
         maven 'Maven363'
     }
+    environment {
+        DOCKER_IMAGE = "yourdockerhubusername/wwp"
+        DOCKER_TAG = "1.0.0"
+    }
     options {
         timeout(10)
-        buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')
+        buildDiscarder(logRotator(daysToKeepStr: '5', numToKeepStr: '5'))
     }
     stages {
-        stage('Build') {
+        stage('Build Maven Project') {
             steps {
-                sh "mvn clean install"
+                sh "mvn clean package"
             }
         }
-        stage('upload artifact to nexus') {
+        stage('Build Docker Image') {
             steps {
-                nexusArtifactUploader artifacts: [
-                    [
-                        artifactId: 'wwp', 
-                        classifier: '', 
-                        file: 'target/wwp-1.0.0.war', 
-                        type: 'war'
-                    ]
-                ], 
-                    credentialsId: 'nexus3', 
-                    groupId: 'koddas.web.war', 
-                    nexusUrl: '10.0.0.91:8081', 
-                    nexusVersion: 'nexus3', 
-                    protocol: 'http', 
-                    repository: 'samplerepo', 
-                    version: '1.0.0'
+                script {
+                    sh """
+                    docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
+                    """
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push $DOCKER_IMAGE:$DOCKER_TAG
+                        """
+                    }
+                }
             }
         }
     }
     post {
-        always{
+        always {
             deleteDir()
         }
         failure {
-            echo "sendmail -s mvn build failed receipients@my.com"
+            echo "Build failed!"
         }
         success {
-            echo "The job is successful"
+            echo "Build and push successful!"
         }
     }
 }
