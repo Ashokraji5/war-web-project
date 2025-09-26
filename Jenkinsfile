@@ -1,52 +1,48 @@
 pipeline {
     agent any
-    tools {
-        maven 'Maven363'
-    }
-    environment {
-        DOCKER_IMAGE = "yourdockerhubusername/wwp"
-        DOCKER_TAG = "1.0.0"
-    }
-    options {
-        timeout(10)
-        buildDiscarder(logRotator(daysToKeepStr: '5', numToKeepStr: '5'))
-    }
+
     stages {
-        stage('Build Maven Project') {
+        stage('Checkout Code') {
             steps {
-                sh "mvn clean package"
+                // Pull the latest code from GitHub
+                git 'https://github.com/yourusername/yourrepo.git'
+            }
+        }
+        stage('Build WAR') {
+            steps {
+                // Run Maven build to create the WAR file
+                sh 'mvn clean package'
             }
         }
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh """
-                    docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
-                    """
-                }
+                // Build Docker image with the WAR file
+                sh 'docker build -t yourdockerhubusername/your-image-name:latest .'
             }
         }
-        stage('Push Docker Image') {
+        stage('Push to Docker Hub') {
             steps {
+                // Push Docker image to Docker Hub using withRegistry (automatically handles login)
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push $DOCKER_IMAGE:$DOCKER_TAG
-                        """
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-creds') {
+                        sh 'docker push yourdockerhubusername/your-image-name:latest'
                     }
                 }
             }
         }
     }
+
     post {
         always {
+            // Clean up the workspace after each build to save space
             deleteDir()
         }
         failure {
+            // Log when the build fails
             echo "Build failed!"
         }
         success {
+            // Log when the build and push succeed
             echo "Build and push successful!"
         }
     }
