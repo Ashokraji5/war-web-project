@@ -1,3 +1,9 @@
 FROM tomcat:9.0
-COPY target/*.war /usr/local/tomcat/webapps/wwp-1.0.0.war
+
+# Remove default Tomcat webapps (optional but clean)
+RUN rm -rf /usr/local/tomcat/webapps/*
+
+# Copy your WAR file and rename it to ROOT.war (optional)
+COPY target/wwp-1.0.0.war /usr/local/tomcat/webapps/ROOT.war
+
 EXPOSE 8080
