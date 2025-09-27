@@ -5,7 +5,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 // Pull the latest code from GitHub
-                git 'https://github.com/yourusername/yourrepo.git'
+                https://github.com/Ashokraji5/war-web-project.git
             }
         }
         stage('Build WAR') {
