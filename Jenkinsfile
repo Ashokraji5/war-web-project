@@ -16,7 +16,7 @@ pipeline {
 
         stage('Checkout from GitHub') {
             steps {
-                git branch: 'main', url: 'https://github.com/<your-user>/<your-repo>.git'
+                git branch: 'main', url: 'https://github.com/Ashokraji5/war-web-project.git'
             }
         }
 
