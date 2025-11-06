@@ -1,11 +1,23 @@
-FROM tomcat:9.0
+# Use official Tomcat base image
+FROM tomcat:9.0-jdk17-temurin
 
-# Remove default Tomcat webapps (optional but clean)
+# Metadata (optional)
+LABEL maintainer="yourname@company.com" \
+      description="Tomcat app image built from WAR stored in Nexus"
+
+# Remove default Tomcat apps for a clean deployment
 RUN rm -rf /usr/local/tomcat/webapps/*
 
-# Copy your WAR file and rename it to ROOT.war (optional)
-# COPY target/wwp-1.0.0.war /usr/local/tomcat/webapps/ROOT.war
+# Pass Nexus WAR URL as a build argument
+ARG WAR_URL
 
-COPY target/wwp-1.0.0.war /usr/local/tomcat/webapps/wwp-1.0.0.war
+# Install wget to download the WAR file
+RUN apt-get update && apt-get install -y wget && \
+    wget -O /usr/local/tomcat/webapps/ROOT.war ${WAR_URL} && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Expose default Tomcat port
 EXPOSE 8080
+
+# Start Tomcat
+CMD ["catalina.sh", "run"]
