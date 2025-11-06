@@ -1,32 +1,70 @@
 pipeline {
     agent any
 
+    environment {
+        SONARQUBE = 'SonarQube'                  // Name you added under Manage Jenkins → Configure System
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
+        NEXUS = 'http://<NEXUS_IP>:8081/repository/maven-releases/'
+        NEXUS_CREDENTIALS = credentials('nexus-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        APP_NAME = "myapp"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
     stages {
-        stage('Checkout Code') {
+        stage('Checkout from GitHub') {
             steps {
-                // Pull the latest code from GitHub
-                git 'https://github.com/Ashokraji5/war-web-project.git'
+                git branch: 'main', url: 'https://github.com/<your-user>/<your-repo>.git'
             }
         }
-        stage('Build WAR') {
+
+        stage('Build & Test with Maven') {
             steps {
-                // Run Maven build to create the WAR file
-                sh 'mvn clean package'
+                sh 'mvn clean install'
             }
         }
-        stage('Build Docker Image') {
+
+        stage('Code Quality - SonarQube Analysis') {
             steps {
-                // Build Docker image with the WAR file
-                sh 'docker build -t yourdockerhubusername/your-image-name:latest .'
+                withSonarQubeEnv('SonarQube') {
+                    sh "mvn sonar:sonar \
+                        -Dsonar.projectKey=${APP_NAME} \
+                        -Dsonar.host.url=http://<SONARQUBE_IP>:9000 \
+                        -Dsonar.login=${SONARQUBE_TOKEN}"
+                }
             }
         }
-        stage('Push to Docker Hub') {
+
+        stage('Quality Gate') {
             steps {
-                // Push Docker image to Docker Hub using withRegistry (automatically handles login)
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-creds') {
-                        sh 'docker push yourdockerhubusername/your-image-name:latest'
-                    }
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Package & Upload to Nexus') {
+            steps {
+                sh "mvn clean deploy -DaltDeploymentRepository=nexus::default::${NEXUS}"
+            }
+        }
+
+        stage('Docker Build Image') {
+            steps {
+                sh """
+                wget ${NEXUS}/${APP_NAME}/${APP_NAME}-${IMAGE_TAG}.war -O app.war
+                docker build -t <your-dockerhub-username>/${APP_NAME}:${IMAGE_TAG} .
+                """
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    docker push <your-dockerhub-username>/${APP_NAME}:${IMAGE_TAG}
+                    """
                 }
             }
         }
@@ -34,16 +72,8 @@ pipeline {
 
     post {
         always {
-            // Clean up the workspace after each build to save space
-            deleteDir()
-        }
-        failure {
-            // Log when the build fails
-            echo "Build failed!"
-        }
-        success {
-            // Log when the build and push succeed
-            echo "Build and push successful!"
+            echo "Cleaning up workspace..."
+            cleanWs()
         }
     }
 }
