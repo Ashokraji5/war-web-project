@@ -4,11 +4,11 @@ pipeline {
     environment {
         SONARQUBE = 'SonarQube'                     // SonarQube name in Jenkins config
         SONARQUBE_TOKEN = credentials('sonarqube-token')
-        NEXUS_URL = 'http://<NEXUS_IP>:8081/repository/maven-releases/'
+        NEXUS_URL = 'http://54.89.190.20:8081/repository/maven-releases/'
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_USER = '<your-dockerhub-username>'
-        APP_GROUP = 'com/example'                   // Update to your actual Maven groupId path
+        APP_GROUP = 'com.example'                   // Update to your actual Maven groupId path
         APP_NAME = 'wwp'                            // Update to match your artifactId
     }
 
@@ -32,7 +32,7 @@ pipeline {
                     sh """
                     mvn sonar:sonar \
                         -Dsonar.projectKey=${APP_NAME} \
-                        -Dsonar.host.url=http://<SONARQUBE_IP>:9000 \
+                        -Dsonar.host.url=http://54.89.190.20:9000 \
                         -Dsonar.login=${SONARQUBE_TOKEN}
                     """
                 }
@@ -49,7 +49,12 @@ pipeline {
 
         stage('Package & Upload WAR to Nexus') {
             steps {
-                sh "mvn clean deploy -DaltDeploymentRepository=nexus::default::${NEXUS_URL}"
+                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                    mvn clean deploy \
+                        -DaltDeploymentRepository=nexus::default::http://${NEXUS_USER}:${NEXUS_PASS}@54.89.190.20:8081/repository/maven-releases/
+                    """
+                }
             }
         }
 
