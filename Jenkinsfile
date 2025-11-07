@@ -4,7 +4,7 @@ pipeline {
     environment {
         SONARQUBE = 'SonarQube'                     // SonarQube name in Jenkins config
         SONARQUBE_TOKEN = credentials('sonarqube-token')
-        NEXUS_URL = 'http://54.89.190.20:8081/repository/maven-releases/'
+        NEXUS_URL = 'http://54.89.190.20:8081/repository/jenkins-maven-release-role/'
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_USER = '<your-dockerhub-username>'
