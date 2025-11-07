@@ -39,14 +39,12 @@
     </plugins>
   </build>
 
-  <!-- Add this section to configure deployment to Nexus -->
+  <!-- Deployment to Nexus -->
   <distributionManagement>
-  <repository>
-    <id>nexus</id> <!-- must match <server> id in settings.xml -->
-    <name>Nexus Releases</name>
-    <url>http://107.20.13.206:8081/repository/maven-releases/</url>
-  </repository>
-</distributionManagement>
-
-
+    <repository>
+      <id>nexus</id> <!-- Must match server id in settings.xml -->
+      <name>Nexus Releases</name>
+      <url>http://54.164.217.128:8081/repository/jenkins-maven-release-role/</url>
+    </repository>
+  </distributionManagement>
 </project>
