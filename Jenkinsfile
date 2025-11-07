@@ -2,23 +2,21 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE = 'SonarQube'
+        SONARQUBE = 'SonarQube'                     // SonarQube name in Jenkins config
         SONARQUBE_TOKEN = credentials('sonarqube-token')
         NEXUS_URL = 'http://107.20.13.206:8081/repository/jenkins-maven-release-role/'
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_USER = '<your-dockerhub-username>'
-        APP_GROUP = 'koddas.web.war'
-        APP_NAME = 'wwp'
+        APP_GROUP = 'koddas.web.war'               // Maven groupId
+        APP_NAME = 'wwp'                            // Maven artifactId
     }
 
     stages {
 
         stage('Checkout from GitHub') {
             steps {
-                git branch: 'main', 
-                    url: 'https://github.com/Ashokraji5/war-web-project.git',
-                    credentialsId: 'github-credentials' // optional if private repo
+                git branch: 'main', url: 'https://github.com/Ashokraji5/war-web-project.git'
             }
         }
 
@@ -104,3 +102,6 @@ pipeline {
         }
         failure {
             echo "❌ Pipeline failed. Check logs for details."
+        }
+    }
+}
