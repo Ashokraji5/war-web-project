@@ -25,7 +25,7 @@ pipeline {
 
         stage('Code Quality - SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube-token') {
+                withSonarQubeEnv('SonarQubeServer') {  // <-- Use Jenkins SonarQube server name here
                     sh "mvn sonar:sonar -s ${MVN_SETTINGS}"
                 }
             }
