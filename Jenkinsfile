@@ -1,27 +1,26 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven3'   // The name of the Maven installation in Jenkins
+    }
+
     environment {
-        SONARQUBE = 'SonarQube'                     // SonarQube name in Jenkins config
         SONARQUBE_TOKEN = credentials('sonarqube-token')
-        NEXUS_URL = 'http://54.164.217.128:8081/repository/jenkins-maven-release-role/'
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_USER = '<your-dockerhub-username>'
-        APP_GROUP = 'koddas.web.war'               // Maven groupId
-        APP_NAME = 'wwp'                            // Maven artifactId
-        GITHUB_CREDENTIALS = 'github-pat'          // Jenkins ID for GitHub PAT
+        APP_GROUP = 'koddas.web.war'
+        APP_NAME = 'wwp'
+        NEXUS_URL = 'http://54.164.217.128:8081/repository/jenkins-maven-release-role/'
+        SONARQUBE_HOST = 'http://44.203.118.214:9000'
     }
 
     stages {
 
         stage('Checkout from GitHub') {
             steps {
-                git(
-                    branch: 'master',
-                    url: 'https://github.com/Ashokraji5/war-web-project.git',
-                    credentialsId: "${GITHUB_CREDENTIALS}"
-                )
+                git branch: 'master', url: 'https://github.com/Ashokraji5/war-web-project.git', credentialsId: 'github-pat'
             }
         }
 
@@ -33,11 +32,11 @@ pipeline {
 
         stage('Code Quality - SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {
+                withSonarQubeEnv('SonarQube') {
                     sh """
                     mvn sonar:sonar \
                         -Dsonar.projectKey=${APP_NAME} \
-                        -Dsonar.host.url=http://44.203.118.214:9000 \
+                        -Dsonar.host.url=${SONARQUBE_HOST} \
                         -Dsonar.login=${SONARQUBE_TOKEN}
                     """
                 }
