@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'   // The name of the Maven installation in Jenkins
+        maven 'maven'  // updated to match your Jenkins tool name
     }
 
     environment {
@@ -17,7 +17,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout from GitHub') {
             steps {
                 git branch: 'master', url: 'https://github.com/Ashokraji5/war-web-project.git', credentialsId: 'github-pat'
