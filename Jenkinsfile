@@ -42,6 +42,7 @@ pipeline {
 
         stage('Docker Build Image from Nexus WAR') {
             steps {
+                // Ensure that the WAR file URL is correct and accessible from Nexus
                 sh """
                 docker build --build-arg WAR_URL=$WAR_URL -t myapp:latest .
                 """
@@ -60,6 +61,7 @@ pipeline {
 
     post {
         success {
+            // Archive the WAR file from Nexus or from the target directory directly
             archiveArtifacts artifacts: 'target/wwp-1.0.0.war', fingerprint: true
             echo "✅ Pipeline completed successfully!"
         }
@@ -67,6 +69,7 @@ pipeline {
             echo "❌ Pipeline failed. Check logs for details."
         }
         always {
+            // Cleaning up the workspace after everything is done, so no data loss occurs
             cleanWs()
         }
     }
