@@ -9,7 +9,8 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
         WAR_URL = 'http://52.200.11.84:8081/repository/jenkins-maven-release-role/koddas/web/war/wwp/1.0.0/wwp-1.0.0.war'
-        DOCKER_IMAGE = 'ashokraji5/myapp:latest' // ✅ Replace with your actual Docker Hub username
+        DOCKER_USERNAME = 'ashokraji' // ✅ your actual Docker Hub username
+        DOCKER_IMAGE = "$DOCKER_USERNAME/myapp:latest"
     }
 
     stages {
@@ -21,28 +22,28 @@ pipeline {
 
         stage('Build & Test with Maven') {
             steps {
-                sh "${MAVEN_HOME}/bin/mvn clean install -s ${MVN_SETTINGS} -DskipTests=false"
+                sh "${MAVEN_HOME}/bin/mvn clean install -s $MVN_SETTINGS -DskipTests=false"
             }
         }
 
         stage('Code Quality - SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQubeServer') {
-                    sh "${MAVEN_HOME}/bin/mvn sonar:sonar -s ${MVN_SETTINGS}"
+                    sh "${MAVEN_HOME}/bin/mvn sonar:sonar -s $MVN_SETTINGS"
                 }
             }
         }
 
         stage('Package & Upload WAR to Nexus') {
             steps {
-                sh "${MAVEN_HOME}/bin/mvn deploy -s ${MVN_SETTINGS}"
+                sh "${MAVEN_HOME}/bin/mvn deploy -s $MVN_SETTINGS"
             }
         }
 
         stage('Docker Build Image from Nexus WAR') {
             steps {
                 sh """
-                docker build --build-arg WAR_URL=${WAR_URL} -t myapp:latest .
+                docker build --build-arg WAR_URL=$WAR_URL -t myapp:latest .
                 """
             }
         }
@@ -50,8 +51,8 @@ pipeline {
         stage('Push Docker Image to DockerHub') {
             steps {
                 withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
-                    sh "docker tag myapp:latest ${DOCKER_IMAGE}"
-                    sh "docker push ${DOCKER_IMAGE}"
+                    sh 'docker tag myapp:latest $DOCKER_IMAGE'
+                    sh 'docker push $DOCKER_IMAGE'
                 }
             }
         }
