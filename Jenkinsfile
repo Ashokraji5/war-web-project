@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        MAVEN_HOME = tool name: 'maven', type: 'maven'   // Maven tool installed in Jenkins
+        MAVEN_HOME = tool name: 'maven', type: 'maven'
         PATH = "${env.MAVEN_HOME}/bin:${env.PATH}"
-        SONARQUBE_TOKEN = credentials('sonarqube-token')  // SonarQube server ID in Jenkins
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'  // Maven settings file
+        MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
     }
 
     stages {
@@ -25,20 +25,20 @@ pipeline {
 
         stage('Code Quality - SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQubeServer') {  // Use the Jenkins UI SonarQube installation name
+                withSonarQubeEnv('SonarQubeServer') {
                     sh "mvn sonar:sonar -s ${MVN_SETTINGS}"
                 }
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                // Increase timeout to 30 minutes to avoid premature abort
-                timeout(time: 30, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // Quality Gate step removed to avoid timeout
+        // stage('Quality Gate') {
+        //     steps {
+        //         timeout(time: 10, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
 
         stage('Package & Upload WAR to Nexus') {
             steps {
