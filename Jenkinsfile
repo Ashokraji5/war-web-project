@@ -8,6 +8,7 @@ pipeline {
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
+        DOCKER_IMAGE = 'your-dockerhub-username/myapp:latest' // Replace with your actual Docker Hub username
     }
 
     stages {
@@ -19,46 +20,35 @@ pipeline {
 
         stage('Build & Test with Maven') {
             steps {
-                sh "mvn clean install -s ${MVN_SETTINGS} -DskipTests=false"
+                sh "${MAVEN_HOME}/bin/mvn clean install -s ${MVN_SETTINGS} -DskipTests=false"
             }
         }
 
         stage('Code Quality - SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQubeServer') {
-                    sh "mvn sonar:sonar -s ${MVN_SETTINGS}"
+                    sh "${MAVEN_HOME}/bin/mvn sonar:sonar -s ${MVN_SETTINGS}"
                 }
             }
         }
 
-        // Quality Gate step removed to avoid timeout
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 10, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
-
         stage('Package & Upload WAR to Nexus') {
             steps {
-                sh "mvn deploy -s ${MVN_SETTINGS}"
+                sh "${MAVEN_HOME}/bin/mvn deploy -s ${MVN_SETTINGS}"
             }
         }
 
         stage('Docker Build Image from Nexus WAR') {
             steps {
-                sh """
-                docker build -t myapp:latest .
-                """
+                sh 'docker build -t myapp:latest .'
             }
         }
 
         stage('Push Docker Image to DockerHub') {
             steps {
                 withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
-                    sh "docker tag myapp:latest your-dockerhub-username/myapp:latest"
-                    sh "docker push your-dockerhub-username/myapp:latest"
+                    sh "docker tag myapp:latest ${DOCKER_IMAGE}"
+                    sh "docker push ${DOCKER_IMAGE}"
                 }
             }
         }
@@ -66,6 +56,7 @@ pipeline {
 
     post {
         success {
+            archiveArtifacts artifacts: 'target/*.war', fingerprint: true
             echo "✅ Pipeline completed successfully!"
         }
         failure {
