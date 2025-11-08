@@ -9,6 +9,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
         DOCKER_IMAGE = 'your-dockerhub-username/myapp:latest' // Replace with your actual Docker Hub username
+        WAR_URL = 'http://52.200.11.84:8081/repository/jenkins-maven-release-role/koddas/web/war/wwp/1.0.0/wwp-1.0.0.war'
     }
 
     stages {
@@ -40,7 +41,9 @@ pipeline {
 
         stage('Docker Build Image from Nexus WAR') {
             steps {
-                sh 'docker build -t myapp:latest .'
+                sh """
+                docker build --build-arg WAR_URL=${WAR_URL} -t myapp:latest .
+                """
             }
         }
 
