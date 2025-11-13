@@ -56,13 +56,13 @@ pipeline {
             }
         }
 
-        stage('Verify WAR Exists') {
+        stage('Verify WAR Exists Locally') {
             steps {
-                sh 'ls -l target'
+                sh 'ls -l target || echo "No local WAR found"'
             }
         }
 
-        stage('Validate WAR URL') {
+        stage('Validate WAR URL on Nexus') {
             steps {
                 script {
                     def status = sh(script: "curl --silent --head --fail $WAR_URL", returnStatus: true)
@@ -70,6 +70,12 @@ pipeline {
                         error "❌ WAR file not accessible at $WAR_URL"
                     }
                 }
+            }
+        }
+
+        stage('Download WAR from Nexus') {
+            steps {
+                sh "mkdir -p target && curl -o target/wwp-${VERSION}.war $WAR_URL"
             }
         }
 
