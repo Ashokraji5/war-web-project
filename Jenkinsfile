@@ -56,12 +56,6 @@ pipeline {
             }
         }
 
-        stage('Verify WAR Exists Locally') {
-            steps {
-                sh 'ls -l target || echo "No local WAR found"'
-            }
-        }
-
         stage('Validate WAR URL on Nexus') {
             steps {
                 script {
@@ -97,14 +91,16 @@ pipeline {
     }
 
     post {
-        success {
-            archiveArtifacts artifacts: "target/wwp-${VERSION}.war", fingerprint: true
-            echo "✅ Pipeline completed successfully!"
-        }
-        failure {
-            echo "❌ Pipeline failed. Check logs for details."
-        }
         always {
+            script {
+                def warFile = "target/wwp-${VERSION}.war"
+                if (fileExists(warFile)) {
+                    archiveArtifacts artifacts: warFile, fingerprint: true
+                    echo "📦 WAR file archived: ${warFile}"
+                } else {
+                    echo "⚠️ WAR file not found for archiving: ${warFile}"
+                }
+            }
             cleanWs()
         }
     }
