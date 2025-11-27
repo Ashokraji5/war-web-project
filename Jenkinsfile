@@ -2,16 +2,16 @@ pipeline {
     agent any
 
     tools {
-        jdk 'jdk17'          // JDK configured in Jenkins global tools
-        maven 'maven-3'      // Maven configured in Jenkins global tools
+        jdk 'jdk17'       // JDK configured in Jenkins global tools
+        maven 'maven-3'   // Maven configured in Jenkins global tools
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/<your-username>/<your-repo>.git',
-                    credentialsId: 'github-creds'   // Jenkins GitHub credentials ID
+                git branch: 'master',
+                    url: 'https://github.com/Ashokraji5/war-web-project.git',
+                    credentialsId: 'github-creds'
             }
         }
 
@@ -43,7 +43,8 @@ pipeline {
 
         stage('Security Scan - Trivy') {
             steps {
-                sh 'trivy fs --exit-code 1 --severity HIGH ./target/*.war'
+                // Generate both console output and an HTML report
+                sh 'trivy fs --exit-code 1 --severity HIGH -f html -o trivy-report.html ./target/*.war'
             }
         }
 
@@ -57,9 +58,10 @@ pipeline {
             }
         }
 
-        stage('Report Conversion') {
+        stage('Publish Reports') {
             steps {
-                sh 'some-json-to-html-tool report.json report.html'
+                // Archive the Trivy HTML report so it’s viewable in Jenkins
+                archiveArtifacts artifacts: 'trivy-report.html', fingerprint: true
             }
         }
     }
