@@ -7,14 +7,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'master',
-                    url: 'https://github.com/Ashokraji5/war-web-project.git',
-                    credentialsId: 'github-creds'
-            }
-        }
-
         stage('Compile') {
             steps {
                 sh 'mvn clean compile'
