@@ -43,8 +43,8 @@ pipeline {
 
         stage('Security Scan - Trivy') {
             steps {
-                // Generate both console output and an HTML report
-                sh 'trivy fs --exit-code 1 --severity HIGH -f html -o trivy-report.html ./target/*.war'
+                // Generate JSON report for Jenkins to archive
+                sh 'trivy fs --exit-code 1 --severity HIGH -f json -o trivy-report.json ./target/*.war'
             }
         }
 
@@ -60,8 +60,8 @@ pipeline {
 
         stage('Publish Reports') {
             steps {
-                // Archive the Trivy HTML report so it’s viewable in Jenkins
-                archiveArtifacts artifacts: 'trivy-report.html', fingerprint: true
+                // Archive Trivy report so it’s downloadable in Jenkins
+                archiveArtifacts artifacts: 'trivy-report.json', fingerprint: true
             }
         }
     }
