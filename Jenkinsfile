@@ -1,107 +1,66 @@
 pipeline {
     agent any
 
-    environment {
-        MAVEN_HOME = tool name: 'maven', type: 'maven'
-        PATH = "${MAVEN_HOME}/bin:${env.PATH}"
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
-        NEXUS_CREDENTIALS = credentials('nexus-credentials')
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
-        DOCKER_USERNAME = 'ashokraji'
-        VERSION = '1.0.0' // Change to '1.0.0-SNAPSHOT' for dev builds
+    tools {
+        jdk 'jdk17'          // JDK configured in Jenkins global tools
+        maven 'maven-3'      // Maven configured in Jenkins global tools
     }
 
     stages {
-        stage('Initialize Variables') {
+        stage('Checkout') {
             steps {
-                script {
-                    IS_SNAPSHOT = VERSION.contains("SNAPSHOT")
-                    NEXUS_REPO = IS_SNAPSHOT ? 'maven-snapshots' : 'jenkins-maven-release-role'
-                    WAR_URL = "http://54.175.138.67:8081/repository/${NEXUS_REPO}/koddas/web/war/wwp/${VERSION}/wwp-${VERSION}.war"
-                    DOCKER_IMAGE = "${DOCKER_USERNAME}/myapp:${VERSION}"
+                git branch: 'main',
+                    url: 'https://github.com/<your-username>/<your-repo>.git',
+                    credentialsId: 'github-creds'   // Jenkins GitHub credentials ID
+            }
+        }
+
+        stage('Compile') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+
+        stage('Code Quality - SonarQube') {
+            steps {
+                withSonarQubeEnv('sonarqube-server') {
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
-        stage('Checkout from GitHub') {
+        stage('Security Scan - Trivy') {
             steps {
-                git url: 'https://github.com/Ashokraji5/war-web-project.git', credentialsId: 'github-pat'
+                sh 'trivy fs --exit-code 1 --severity HIGH ./target/*.war'
             }
         }
 
-        stage('Build & Test with Maven') {
+        stage('Deploy to Nexus') {
             steps {
-                sh "mvn clean package -s $MVN_SETTINGS -DskipTests=false"
-            }
-        }
-
-        stage('Code Quality - SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQubeServer') {
-                    sh "mvn sonar:sonar -s $MVN_SETTINGS"
+                withCredentials([usernamePassword(credentialsId: 'nexus-creds',
+                                                 usernameVariable: 'NEXUS_USER',
+                                                 passwordVariable: 'NEXUS_PASS')]) {
+                    sh 'mvn deploy -s /var/lib/jenkins/.m2/settings.xml'
                 }
             }
         }
 
-        stage('Package & Upload WAR to Nexus') {
+        stage('Report Conversion') {
             steps {
-                script {
-                    try {
-                        sh "mvn deploy -s $MVN_SETTINGS"
-                    } catch (err) {
-                        error "❌ Maven deploy failed: ${err}"
-                    }
-                }
+                sh 'some-json-to-html-tool report.json report.html'
             }
-        }
-
-        stage('Validate WAR URL on Nexus') {
-            steps {
-                script {
-                    def status = sh(script: "curl --silent --head --fail $WAR_URL", returnStatus: true)
-                    if (status != 0) {
-                        error "❌ WAR file not accessible at $WAR_URL"
-                    }
-                }
-            }
-        }
-
-        stage('Download WAR from Nexus') {
-            steps {
-                sh "mkdir -p target && curl -o target/wwp-${VERSION}.war $WAR_URL"
-            }
-        }
-
-        stage('Docker Build Image from Nexus WAR') {
-            steps {
-                sh """
-                docker build --build-arg WAR_URL=$WAR_URL -t $DOCKER_IMAGE .
-                """
-            }
-        }
-
-        stage('Push Docker Image to DockerHub') {
-            steps {
-                withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
-                    sh "docker push $DOCKER_IMAGE"
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            script {
-                def warFile = "target/wwp-${VERSION}.war"
-                if (fileExists(warFile)) {
-                    archiveArtifacts artifacts: warFile, fingerprint: true
-                    echo "📦 WAR file archived: ${warFile}"
-                } else {
-                    echo "⚠️ WAR file not found for archiving: ${warFile}"
-                }
-            }
-            cleanWs()
         }
     }
 }
