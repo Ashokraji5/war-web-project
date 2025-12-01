@@ -35,7 +35,7 @@ pipeline {
 
         stage('Security Scan - Trivy') {
             steps {
-                // Generate JSON report for Jenkins to archive
+                // Scan the WAR file in target directory
                 sh 'trivy fs --exit-code 1 --severity HIGH -f json -o trivy-report.json ./target/*.war'
             }
         }
@@ -56,15 +56,11 @@ pipeline {
             }
         }
 
-        // 🚀 New Docker Steps
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Pull WAR from Nexus (example, adjust URL/path)
-                    sh 'curl -u $NEXUS_USER:$NEXUS_PASS -o app.war http://nexus.example.com/repository/maven-releases/com/example/app/1.0/app-1.0.war'
-
-                    // Copy WAR into Docker build context
-                    sh 'cp app.war ./docker/'
+                    // Copy WAR from Jenkins workspace into Docker build context
+                    sh 'cp ./target/*.war ./docker/app.war'
 
                     // Build Docker image
                     sh 'docker build -t myapp:latest ./docker'
@@ -78,8 +74,8 @@ pipeline {
                                                  usernameVariable: 'DOCKER_USER',
                                                  passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh 'docker tag myapp:latest $DOCKER_USER/myapp:latest'
-                    sh 'docker push $DOCKER_USER/myapp:latest'
+                    sh 'docker tag myapp:latest $DOCKER_USER/myapp:${BUILD_NUMBER}'
+                    sh 'docker push $DOCKER_USER/myapp:${BUILD_NUMBER}'
                 }
             }
         }
