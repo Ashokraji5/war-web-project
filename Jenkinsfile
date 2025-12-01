@@ -2,27 +2,21 @@ pipeline {
     agent any
 
     tools {
-        jdk 'jdk17'       // JDK configured in Jenkins global tools
-        maven 'maven-3'   // Maven configured in Jenkins global tools
+        jdk 'jdk17'
+        maven 'maven-3'
     }
 
     stages {
         stage('Compile') {
-            steps {
-                sh 'mvn clean compile'
-            }
+            steps { sh 'mvn clean compile' }
         }
 
         stage('Unit Tests') {
-            steps {
-                sh 'mvn test'
-            }
+            steps { sh 'mvn test' }
         }
 
         stage('Package') {
-            steps {
-                sh 'mvn package'
-            }
+            steps { sh 'mvn package' }
         }
 
         stage('Code Quality - SonarQube') {
@@ -35,7 +29,6 @@ pipeline {
 
         stage('Security Scan - Trivy') {
             steps {
-                // Scan the WAR file in target directory
                 sh 'trivy fs --exit-code 1 --severity HIGH -f json -o trivy-report.json ./target/*.war'
             }
         }
@@ -59,11 +52,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Copy WAR from Jenkins workspace into Docker build context
-                    sh 'cp ./target/*.war ./docker/app.war'
-
+                    // Copy WAR into Docker build context
+                    sh 'cp ./target/*.war ./ROOT.war'
                     // Build Docker image
-                    sh 'docker build -t myapp:latest ./docker'
+                    sh 'docker build -t myapp:${BUILD_NUMBER} .'
                 }
             }
         }
@@ -74,7 +66,7 @@ pipeline {
                                                  usernameVariable: 'DOCKER_USER',
                                                  passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh 'docker tag myapp:latest $DOCKER_USER/myapp:${BUILD_NUMBER}'
+                    sh 'docker tag myapp:${BUILD_NUMBER} $DOCKER_USER/myapp:${BUILD_NUMBER}'
                     sh 'docker push $DOCKER_USER/myapp:${BUILD_NUMBER}'
                 }
             }
