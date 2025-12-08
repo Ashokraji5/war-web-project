@@ -41,8 +41,10 @@
 
   <!-- Deployment to Nexus -->
   <distributionManagement>
-  <repository>
-    <id>nexus</id>
-    <url>http://34.236.151.246:8081/repository/maven-releases/</url>
-  </repository>
-</distributionManagement>
+    <repository>
+      <id>nexus</id>
+      <url>http://34.236.151.246:8081/repository/maven-releases/</url>
+    </repository>
+  </distributionManagement>
+
+</project>
