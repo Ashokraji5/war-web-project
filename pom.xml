@@ -41,10 +41,11 @@
 
   <!-- Deployment to Nexus -->
   <distributionManagement>
-    <repository>
-      <id>jenkins-maven-release-role</id>
-      <url>http://34.236.151.246:8081/repository/maven-release-role/</url>
-    </repository>
-  </distributionManagement>
+  <repository>
+    <id>jenkins-maven-release-role</id>
+    <url>http://<NEXUS_IP>:8081/repository/maven-release-role/</url>
+  </repository>
+</distributionManagement>
+
 
 </project>
