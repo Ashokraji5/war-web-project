@@ -60,11 +60,13 @@ pipeline {
             }
         }
 
-        stage('Download WAR from Nexus') {
+        stage('Download & Rename WAR for Docker') {
             steps {
                 script {
                     def WAR_URL = "http://<NEXUS_IP>:8081/repository/maven-releases/${APP_NAME}/${VERSION}/${APP_NAME}-${VERSION}.war"
                     sh "mkdir -p target && curl -o target/${APP_NAME}-${VERSION}.war $WAR_URL"
+                    // Rename WAR to ROOT.war for Tomcat deployment
+                    sh "cp target/${APP_NAME}-${VERSION}.war ROOT.war"
                 }
             }
         }
