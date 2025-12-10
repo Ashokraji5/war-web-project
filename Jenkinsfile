@@ -1,69 +1,70 @@
 pipeline {
-    agent { label 'linux' }
-
-    tools {
-        jdk 'jdk17'
-        maven 'maven-3'
-    }
+    agent { label 'Linux' }
 
     environment {
-        APP_NAME     = "myapp"
-        IMAGE_TAG    = "${BUILD_NUMBER}"
-        NEXUS_CFG    = "/var/lib/jenkins/.m2/settings.xml"
-        VERSION      = "1.0.0" // use 1.0.0-SNAPSHOT for dev builds
-        DOCKER_USER  = "ashokraji"
-        GIT_BRANCH   = "master"
-        NEXUS_IP     = "100.27.216.116"
-        NEXUS_REPO   = "jenkins-maven"   // aligned with pom.xml
+        MAVEN_HOME = tool name: 'maven', type: 'maven'
+        PATH = "${MAVEN_HOME}/bin:${env.PATH}"
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
+        NEXUS_CREDENTIALS = credentials('nexus-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
+        DOCKER_USERNAME = 'ashokraji'
+        VERSION = '1.0.0' // Change to '1.0.0-SNAPSHOT' for dev builds
     }
 
     stages {
-        stage('Checkout from GitHub') {
-            steps {
-                git branch: "${GIT_BRANCH}",
-                    url: 'https://github.com/Ashokraji5/war-web-project.git',
-                    credentialsId: 'github-pat-token'
-            }
-        }
-
-        stage('Build & Test') {
-            steps {
-                sh "mvn clean compile test package -s $NEXUS_CFG"
-            }
-        }
-
-        stage('Quality Checks') {
-            parallel {
-                stage('SonarQube') {
-                    steps {
-                        withSonarQubeEnv('sonarqube-server') {
-                            sh "mvn sonar:sonar -s $NEXUS_CFG"
-                        }
-                    }
-                }
-                stage('Trivy Scan') {
-                    steps {
-                        sh 'trivy image alpine --download-db-only || true'
-                        sh 'trivy fs --exit-code 1 --severity HIGH -o trivy-report.json ./target/*.war'
-                    }
-                }
-            }
-        }
-
-        stage('Push WAR to Nexus') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-creds',
-                                                 usernameVariable: 'NEXUS_USER',
-                                                 passwordVariable: 'NEXUS_PASS')]) {
-                    sh "mvn deploy -s $NEXUS_CFG"
-                }
-            }
-        }
-
-        stage('Validate WAR in Nexus') {
+        stage('Initialize Variables') {
             steps {
                 script {
-                    def WAR_URL = "http://${NEXUS_IP}:8081/repository/${NEXUS_REPO}/${APP_NAME}/${VERSION}/${APP_NAME}-${VERSION}.war"
+                    IS_SNAPSHOT = VERSION.contains("SNAPSHOT")
+                    NEXUS_REPO = IS_SNAPSHOT ? 'maven-snapshots' : 'jenkins-maven-release-role'
+                    WAR_URL = "http://54.175.138.67:8081/repository/${NEXUS_REPO}/koddas/web/war/wwp/${VERSION}/wwp-${VERSION}.war"
+                    DOCKER_IMAGE = "${DOCKER_USERNAME}/myapp:${VERSION}"
+                }
+            }
+        }
+
+        stage('Checkout from GitHub') {
+            steps {
+                git url: 'https://github.com/Ashokraji5/war-web-project.git', credentialsId: 'github-pat'
+            }
+        }
+
+        stage('Build & Test with Maven') {
+            steps {
+                sh "mvn clean package -s $MVN_SETTINGS -DskipTests=false"
+            }
+        }
+
+        stage('Code Quality - SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh "mvn sonar:sonar -s $MVN_SETTINGS"
+                }
+            }
+        }
+
+        stage('Trivy Scan WAR') {
+            steps {
+                sh 'trivy fs --exit-code 1 --severity HIGH -o trivy-report-war.json ./target/*.war'
+            }
+        }
+
+        stage('Package & Upload WAR to Nexus') {
+            steps {
+                script {
+                    try {
+                        sh "mvn deploy -s $MVN_SETTINGS"
+                    } catch (err) {
+                        error "❌ Maven deploy failed: ${err}"
+                    }
+                }
+            }
+        }
+
+        stage('Validate WAR URL on Nexus') {
+            steps {
+                script {
                     def status = sh(script: "curl --silent --head --fail $WAR_URL", returnStatus: true)
                     if (status != 0) {
                         error "❌ WAR file not accessible at $WAR_URL"
@@ -72,27 +73,30 @@ pipeline {
             }
         }
 
-        stage('Download & Rename WAR for Docker') {
+        stage('Download WAR from Nexus') {
             steps {
-                script {
-                    def WAR_URL = "http://${NEXUS_IP}:8081/repository/${NEXUS_REPO}/${APP_NAME}/${VERSION}/${APP_NAME}-${VERSION}.war"
-                    sh "mkdir -p target && curl -o target/${APP_NAME}-${VERSION}.war $WAR_URL"
-                    sh "cp target/${APP_NAME}-${VERSION}.war ROOT.war"
-                }
+                sh "mkdir -p target && curl -o target/wwp-${VERSION}.war $WAR_URL"
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Docker Build Image from Nexus WAR') {
             steps {
-                script {
-                    def DOCKER_IMAGE = "${DOCKER_USER}/${APP_NAME}:${IMAGE_TAG}"
-                    sh "docker build -t $DOCKER_IMAGE ."
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-                                                     usernameVariable: 'DOCKER_USER',
-                                                     passwordVariable: 'DOCKER_PASS')]) {
-                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                        sh "docker push $DOCKER_IMAGE"
-                    }
+                sh """
+                docker build --build-arg WAR_URL=$WAR_URL -t $DOCKER_IMAGE .
+                """
+            }
+        }
+
+        stage('Trivy Scan Docker Image') {
+            steps {
+                sh "trivy image --exit-code 1 --severity HIGH -o trivy-report-image.json $DOCKER_IMAGE"
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
+                    sh "docker push $DOCKER_IMAGE"
                 }
             }
         }
@@ -100,7 +104,16 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'trivy-report.json', fingerprint: true
+            script {
+                def warFile = "target/wwp-${VERSION}.war"
+                if (fileExists(warFile)) {
+                    archiveArtifacts artifacts: warFile, fingerprint: true
+                    echo "📦 WAR file archived: ${warFile}"
+                } else {
+                    echo "⚠️ WAR file not found for archiving: ${warFile}"
+                }
+            }
+            archiveArtifacts artifacts: 'trivy-report-*.json', fingerprint: true
             cleanWs()
         }
     }
