@@ -44,10 +44,10 @@
 
   <!-- Deployment to Nexus Release Repository -->
   <distributionManagement>
-    <repository>
-      <id>jenkins-maven</id>
-      <url>http://100.27.216.116:8081/repository/jenkins-maven/</url>
-    </repository>
-  </distributionManagement>
+  <repository>
+    <id>maven-releases</id>
+    <url>http://100.27.216.116:8081/repository/maven-releases/</url>
+  </repository>
+</distributionManagement>
 
 </project>
