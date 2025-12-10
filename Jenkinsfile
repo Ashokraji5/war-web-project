@@ -21,7 +21,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'github-pat-token',
                                                  usernameVariable: 'GIT_USER',
                                                  passwordVariable: 'GIT_TOKEN')]) {
-                    git branch: 'main',
+                    git branch: 'master',
                         url: "https://${GIT_USER}:${GIT_TOKEN}@github.com/Ashokraji5/myapp.git"
                 }
             }
