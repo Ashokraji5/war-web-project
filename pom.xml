@@ -1,18 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
-  <groupId>myapp</groupId>
-  <artifactId>myapp</artifactId>
+  
+  <groupId>koddas.web.war</groupId>
+  <artifactId>wwp</artifactId>
   <version>1.0.0</version>
   <packaging>war</packaging>
-
-  <name>MyApp WAR Project</name>
-  <description>A simple Maven-enabled WAR web project</description>
-
+  
+  <name>WAR Web Project</name>
+  <description>A very simple Maven-enabled WAR web project</description>
+  
   <dependencies>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -26,7 +24,7 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-
+  
   <build>
     <plugins>
       <plugin>
@@ -34,19 +32,19 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.1</version>
         <configuration>
-          <source>17</source>
-          <target>17</target>
+          <source>1.7</source>
+          <target>1.7</target>
         </configuration>
       </plugin>
     </plugins>
   </build>
 
-  <!-- Deployment to Nexus Release Repository -->
+  <!-- Deployment to Nexus -->
   <distributionManagement>
     <repository>
-      <id>jenkins-maven</id>
-      <url>http://100.27.216.116:8081/repository/jenkins-maven/</url>
+      <id>jenkins-maven-release-role</id> <!-- Must match server id in settings.xml -->
+      <name>Nexus Releases</name>
+      <url>http://54.175.138.67:8081/repository/jenkins-maven-release-role/</url>
     </repository>
   </distributionManagement>
-
 </project>
