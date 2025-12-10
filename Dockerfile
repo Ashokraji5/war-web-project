@@ -1,4 +1,14 @@
 FROM tomcat:9.0-jdk17-temurin
-COPY ROOT.war /usr/local/tomcat/webapps/ROOT.war
+
+ARG WAR_URL
+ENV WAR_URL=${WAR_URL}
+
+RUN set -e && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends wget && \
+    rm -rf /usr/local/tomcat/webapps/* && \
+    wget -O /usr/local/tomcat/webapps/ROOT.war ${WAR_URL} && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 EXPOSE 8080
 CMD ["catalina.sh", "run"]
