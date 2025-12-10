@@ -41,11 +41,11 @@
     </plugins>
   </build>
 
-  <!-- Deployment to Nexus -->
+  <!-- Deployment to Nexus Release Repository -->
   <distributionManagement>
     <repository>
-      <id>jenkins-maven-release-role</id>
-      <url>http://100.27.216.116:8081/repository/maven-release-role/</url>
+      <id>jenkins-maven</id>
+      <url>http://100.27.216.116:8081/repository/jenkins-maven/</url>
     </repository>
   </distributionManagement>
 
