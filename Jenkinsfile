@@ -14,6 +14,7 @@ pipeline {
         DOCKER_USER  = "ashokraji"
         GIT_BRANCH   = "master"
         NEXUS_IP     = "100.27.216.116"
+        NEXUS_REPO   = "jenkins-maven"   // ✅ aligned with pom.xml
     }
 
     stages {
@@ -42,7 +43,6 @@ pipeline {
                 }
                 stage('Trivy Scan') {
                     steps {
-                        // update DB before scanning
                         sh 'trivy image alpine --download-db-only || true'
                         sh 'trivy fs --exit-code 1 --severity HIGH -o trivy-report.json ./target/*.war'
                     }
@@ -63,7 +63,7 @@ pipeline {
         stage('Validate WAR in Nexus') {
             steps {
                 script {
-                    def WAR_URL = "http://${NEXUS_IP}:8081/repository/maven-releases/${APP_NAME}/${VERSION}/${APP_NAME}-${VERSION}.war"
+                    def WAR_URL = "http://${NEXUS_IP}:8081/repository/${NEXUS_REPO}/${APP_NAME}/${VERSION}/${APP_NAME}-${VERSION}.war"
                     def status = sh(script: "curl --silent --head --fail $WAR_URL", returnStatus: true)
                     if (status != 0) {
                         error "❌ WAR file not accessible at $WAR_URL"
@@ -75,7 +75,7 @@ pipeline {
         stage('Download & Rename WAR for Docker') {
             steps {
                 script {
-                    def WAR_URL = "http://${NEXUS_IP}:8081/repository/maven-releases/${APP_NAME}/${VERSION}/${APP_NAME}-${VERSION}.war"
+                    def WAR_URL = "http://${NEXUS_IP}:8081/repository/${NEXUS_REPO}/${APP_NAME}/${VERSION}/${APP_NAME}-${VERSION}.war"
                     sh "mkdir -p target && curl -o target/${APP_NAME}-${VERSION}.war $WAR_URL"
                     sh "cp target/${APP_NAME}-${VERSION}.war ROOT.war"
                 }
