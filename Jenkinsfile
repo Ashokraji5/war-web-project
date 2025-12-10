@@ -7,14 +7,26 @@ pipeline {
     }
 
     environment {
-        APP_NAME   = "myapp"
-        IMAGE_TAG  = "${BUILD_NUMBER}"
-        NEXUS_CFG  = "/var/lib/jenkins/.m2/settings.xml"
-        VERSION    = "1.0.0" // or 1.0.0-SNAPSHOT for dev builds
+        APP_NAME    = "myapp"
+        IMAGE_TAG   = "${BUILD_NUMBER}"
+        NEXUS_CFG   = "/var/lib/jenkins/.m2/settings.xml"
+        VERSION     = "1.0.0" // or 1.0.0-SNAPSHOT for dev builds
         DOCKER_USER = "ashokraji"
     }
 
     stages {
+        stage('Checkout Code') {
+            steps {
+                // Use GitHub PAT stored in Jenkins credentials
+                withCredentials([usernamePassword(credentialsId: 'github-pat-token',
+                                                 usernameVariable: 'GIT_USER',
+                                                 passwordVariable: 'GIT_TOKEN')]) {
+                    git branch: 'main',
+                        url: "https://${GIT_USER}:${GIT_TOKEN}@github.com/Ashokraji5/myapp.git"
+                }
+            }
+        }
+
         stage('Build & Test') {
             steps {
                 sh 'mvn clean compile test package'
@@ -65,7 +77,6 @@ pipeline {
                 script {
                     def WAR_URL = "http://<NEXUS_IP>:8081/repository/maven-releases/${APP_NAME}/${VERSION}/${APP_NAME}-${VERSION}.war"
                     sh "mkdir -p target && curl -o target/${APP_NAME}-${VERSION}.war $WAR_URL"
-                    // Rename WAR to ROOT.war for Tomcat deployment
                     sh "cp target/${APP_NAME}-${VERSION}.war ROOT.war"
                 }
             }
