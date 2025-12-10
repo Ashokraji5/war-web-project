@@ -10,11 +10,11 @@ pipeline {
         APP_NAME     = "myapp"
         IMAGE_TAG    = "${BUILD_NUMBER}"
         NEXUS_CFG    = "/var/lib/jenkins/.m2/settings.xml"
-        VERSION      = "1.0.0" // or 1.0.0-SNAPSHOT for dev builds
+        VERSION      = "1.0.0" // use 1.0.0-SNAPSHOT for dev builds
         DOCKER_USER  = "ashokraji"
         GIT_BRANCH   = "master"
         NEXUS_IP     = "100.27.216.116"
-        NEXUS_REPO   = "jenkins-maven"   // ✅ aligned with pom.xml
+        NEXUS_REPO   = "jenkins-maven"   // aligned with pom.xml
     }
 
     stages {
@@ -28,7 +28,7 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                sh 'mvn clean compile test package'
+                sh "mvn clean compile test package -s $NEXUS_CFG"
             }
         }
 
@@ -37,7 +37,7 @@ pipeline {
                 stage('SonarQube') {
                     steps {
                         withSonarQubeEnv('sonarqube-server') {
-                            sh 'mvn sonar:sonar'
+                            sh "mvn sonar:sonar -s $NEXUS_CFG"
                         }
                     }
                 }
