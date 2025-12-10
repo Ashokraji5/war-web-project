@@ -5,7 +5,6 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- Coordinates updated to match pipeline expectation -->
   <groupId>myapp</groupId>
   <artifactId>myapp</artifactId>
   <version>1.0.0</version>
@@ -35,8 +34,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.1</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>17</source>
+          <target>17</target>
         </configuration>
       </plugin>
     </plugins>
@@ -44,10 +43,10 @@
 
   <!-- Deployment to Nexus Release Repository -->
   <distributionManagement>
-  <repository>
-    <id>maven-releases</id>
-    <url>http://100.27.216.116:8081/repository/maven-releases/</url>
-  </repository>
-</distributionManagement>
+    <repository>
+      <id>jenkins-maven</id>
+      <url>http://100.27.216.116:8081/repository/jenkins-maven/</url>
+    </repository>
+  </distributionManagement>
 
 </project>
