@@ -43,7 +43,7 @@
   <distributionManagement>
   <repository>
     <id>jenkins-maven-release-role</id>
-    <url>http://<NEXUS_IP>:8081/repository/maven-release-role/</url>
+    <url>http://100.27.216.116:8081/repository/maven-release-role/</url>
   </repository>
 </distributionManagement>
 
