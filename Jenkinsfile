@@ -12,8 +12,8 @@ pipeline {
         NEXUS_CFG    = "/var/lib/jenkins/.m2/settings.xml"
         VERSION      = "1.0.0" // or 1.0.0-SNAPSHOT for dev builds
         DOCKER_USER  = "ashokraji"
-        GIT_BRANCH   = "master"
-        NEXUS_IP     = "100.27.216.116"   // ✅ your Nexus server IP
+        GIT_BRANCH   = "master"   // change to 'main' if your repo uses main
+        NEXUS_IP     = "100.27.216.116"   // your Nexus server IP
     }
 
     stages {
@@ -23,7 +23,7 @@ pipeline {
                                                  usernameVariable: 'GIT_USER',
                                                  passwordVariable: 'GIT_TOKEN')]) {
                     git branch: "${GIT_BRANCH}",
-                        url: "https://${GIT_USER}:${GIT_TOKEN}@github.com/Ashokraji5/${APP_NAME}.git"
+                        url: "https://${GIT_USER}:${GIT_TOKEN}@github.com/Ashokraji5/myapp.git"
                 }
             }
         }
@@ -45,6 +45,7 @@ pipeline {
                 }
                 stage('Trivy Scan') {
                     steps {
+                        // update DB before scanning to avoid failures
                         sh 'trivy image alpine --download-db-only || true'
                         sh 'trivy fs --exit-code 1 --severity HIGH -o trivy-report.json ./target/*.war'
                     }
