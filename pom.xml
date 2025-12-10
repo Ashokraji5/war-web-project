@@ -5,13 +5,14 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>koddas.web.war</groupId>
-  <artifactId>wwp</artifactId>
+  <!-- Coordinates updated to match pipeline expectation -->
+  <groupId>myapp</groupId>
+  <artifactId>myapp</artifactId>
   <version>1.0.0</version>
   <packaging>war</packaging>
 
-  <name>WAR Web Project</name>
-  <description>A very simple Maven-enabled WAR web project</description>
+  <name>MyApp WAR Project</name>
+  <description>A simple Maven-enabled WAR web project</description>
 
   <dependencies>
     <dependency>
