@@ -18,7 +18,7 @@ pipeline {
                 script {
                     IS_SNAPSHOT = VERSION.contains("SNAPSHOT")
                     NEXUS_REPO = IS_SNAPSHOT ? 'maven-snapshots' : 'jenkins-maven-release-role'
-                    WAR_URL = "http://54.175.138.67:8081/repository/${NEXUS_REPO}/koddas/web/war/wwp/${VERSION}/wwp-${VERSION}.war"
+                    WAR_URL = "http://107.23.83.171:8081/repository/${NEXUS_REPO}/koddas/web/war/wwp/${VERSION}/wwp-${VERSION}.war"
                     DOCKER_IMAGE = "${DOCKER_USERNAME}/myapp:${VERSION}"
                 }
             }
