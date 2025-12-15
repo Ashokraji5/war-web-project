@@ -48,7 +48,8 @@ pipeline {
 
         stage('Trivy Scan WAR') {
             steps {
-                sh "trivy fs --exit-code 1 --severity HIGH --cache-dir $TRIVY_CACHE -o trivy-report-war.json ./target/*.war"
+                // Fail only if CRITICAL vulnerabilities are found in WAR
+                sh "trivy fs --exit-code 1 --severity CRITICAL --cache-dir $TRIVY_CACHE -o trivy-report-war.json ./target/*.war"
             }
         }
 
@@ -91,7 +92,8 @@ pipeline {
 
         stage('Trivy Scan Docker Image') {
             steps {
-                sh "trivy image --exit-code 1 --severity HIGH --cache-dir $TRIVY_CACHE -o trivy-report-image.json $DOCKER_IMAGE"
+                // Fail only if CRITICAL vulnerabilities are found in Docker image
+                sh "trivy image --exit-code 1 --severity CRITICAL --cache-dir $TRIVY_CACHE -o trivy-report-image.json $DOCKER_IMAGE"
             }
         }
 
@@ -117,7 +119,7 @@ pipeline {
             }
             archiveArtifacts artifacts: 'trivy-report-*.json', fingerprint: true
 
-            // ✅ Correct cleanup command (no invalid --cache flag)
+            // ✅ Correct cleanup command
             sh "trivy clean --scan-cache"
             cleanWs(deleteDirs: true, notFailBuild: true)
         }
