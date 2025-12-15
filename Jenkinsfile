@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'linux' }
+    agent any
 
     environment {
         MAVEN_HOME = tool name: 'maven', type: 'maven'
@@ -10,6 +10,8 @@ pipeline {
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
         DOCKER_USERNAME = 'ashokraji'
         VERSION = '1.0.0' // Change to '1.0.0-SNAPSHOT' for dev builds
+        TRIVY_CACHE = '/var/lib/jenkins/trivy-cache' // custom cache dir
+        TMPDIR = '/var/lib/jenkins/tmp'              // redirect tmp usage
     }
 
     stages {
@@ -46,7 +48,7 @@ pipeline {
 
         stage('Trivy Scan WAR') {
             steps {
-                sh 'trivy fs --exit-code 1 --severity HIGH -o trivy-report-war.json ./target/*.war'
+                sh "trivy fs --exit-code 1 --severity HIGH --cache-dir $TRIVY_CACHE -o trivy-report-war.json ./target/*.war"
             }
         }
 
@@ -89,7 +91,7 @@ pipeline {
 
         stage('Trivy Scan Docker Image') {
             steps {
-                sh "trivy image --exit-code 1 --severity HIGH -o trivy-report-image.json $DOCKER_IMAGE"
+                sh "trivy image --exit-code 1 --severity HIGH --cache-dir $TRIVY_CACHE -o trivy-report-image.json $DOCKER_IMAGE"
             }
         }
 
@@ -114,7 +116,10 @@ pipeline {
                 }
             }
             archiveArtifacts artifacts: 'trivy-report-*.json', fingerprint: true
-            cleanWs()
+
+            // Clean Trivy cache and workspace
+            sh "trivy clean --cache"
+            cleanWs(deleteDirs: true, notFailBuild: true)
         }
     }
 }
