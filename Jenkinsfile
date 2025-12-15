@@ -117,8 +117,8 @@ pipeline {
             }
             archiveArtifacts artifacts: 'trivy-report-*.json', fingerprint: true
 
-            // Clean Trivy cache and workspace
-            sh "trivy clean --cache"
+            // ✅ Correct cleanup command (no invalid --cache flag)
+            sh "trivy clean --scan-cache"
             cleanWs(deleteDirs: true, notFailBuild: true)
         }
     }
