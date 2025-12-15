@@ -44,7 +44,7 @@
     <repository>
       <id>jenkins-maven-release-role</id> <!-- Must match server id in settings.xml -->
       <name>Nexus Releases</name>
-      <url>http://107.23.83.171:8081/repository/jenkins-maven-release-role/</url>
+      <url>http://34.228.30.244:8081/repository/jenkins-maven-release-role/</url>
     </repository>
   </distributionManagement>
 </project>
