@@ -47,11 +47,11 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'tomcat-cred',
                                                  usernameVariable: 'TOMCAT_USER',
                                                  passwordVariable: 'TOMCAT_PASS')]) {
-                    sh """
+                    sh '''
                     curl -u $TOMCAT_USER:$TOMCAT_PASS \
-                         "http://$TOMCAT_HOST:$TOMCAT_PORT/manager/text/deploy?path=/$APP_NAME&update=true" \
-                         --upload-file "target/${APP_NAME}.war"
-                    """
+                         'http://$TOMCAT_HOST:$TOMCAT_PORT/manager/text/deploy?path=/$APP_NAME&update=true' \
+                         --upload-file 'target/${APP_NAME}.war'
+                    '''
                 }
             }
         }
