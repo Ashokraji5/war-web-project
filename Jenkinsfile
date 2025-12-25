@@ -7,9 +7,10 @@ pipeline {
     }
 
     environment {
-        APP_NAME    = "sample-app"       // Non-sensitive
+        APP_NAME    = "sample-app"       // Context path name in Tomcat
         TOMCAT_HOST = "tomcat-server"    // Non-sensitive
         TOMCAT_PORT = "8081"             // Non-sensitive
+        VERSION     = "1.0.0"            // Matches <version> in pom.xml
     }
 
     stages {
@@ -48,9 +49,11 @@ pipeline {
                                                  usernameVariable: 'TOMCAT_USER',
                                                  passwordVariable: 'TOMCAT_PASS')]) {
                     sh '''
-                    curl -u $TOMCAT_USER:$TOMCAT_PASS \
-                         'http://$TOMCAT_HOST:$TOMCAT_PORT/manager/text/deploy?path=/$APP_NAME&update=true' \
-                         --upload-file 'target/${APP_NAME}.war'
+                        WAR_FILE="target/wwp-$VERSION.war"
+                        echo "Deploying $WAR_FILE"
+                        curl -u $TOMCAT_USER:$TOMCAT_PASS \
+                             "http://$TOMCAT_HOST:$TOMCAT_PORT/manager/text/deploy?path=/$APP_NAME&update=true" \
+                             --upload-file "$WAR_FILE"
                     '''
                 }
             }
