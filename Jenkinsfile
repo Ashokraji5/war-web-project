@@ -35,7 +35,7 @@ pipeline {
             steps {
                 sh '''
                 # Example: copy WAR file to Tomcat server
-                cp target/myapp.war /opt/tomcat/webapps/
+                cp target/wwp-1.0.0.war /opt/tomcat/webapps/
                 '''
             }
         }
