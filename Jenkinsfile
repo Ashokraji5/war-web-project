@@ -2,21 +2,14 @@ pipeline {
     agent any
 
     tools {
-        // This must match the Maven installation name in Jenkins Global Tool Configuration
-        maven 'maven'
-    }
-
-    environment {
-        APP_NAME    = "sample-app"       // Context path name in Tomcat
-        TOMCAT_HOST = "tomcat-server"    // Non-sensitive
-        TOMCAT_PORT = "8081"             // Non-sensitive
-        VERSION     = "1.0.0"            // Matches <version> in pom.xml
+        maven 'Maven3'   // Name of Maven installation in Jenkins
+        
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'https://github.com/Ashokraji5/war-web-project.git'
+                git branch: 'master', url: 'https://github.com/your-username/your-java-repo.git'
             }
         }
 
@@ -36,33 +29,24 @@ pipeline {
             steps {
                 sh 'mvn package'
             }
-            post {
-                success {
-                    archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
-                }
-            }
         }
 
-        stage('Deploy to Tomcat') {
+        stage('Deploy') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'tomcat-cred',
-                                                 usernameVariable: 'TOMCAT_USER',
-                                                 passwordVariable: 'TOMCAT_PASS')]) {
-                    sh '''
-                        WAR_FILE="target/wwp-$VERSION.war"
-                        echo "Deploying $WAR_FILE"
-                        curl -u $TOMCAT_USER:$TOMCAT_PASS \
-                             "http://$TOMCAT_HOST:$TOMCAT_PORT/manager/text/deploy?path=/$APP_NAME&update=true" \
-                             --upload-file "$WAR_FILE"
-                    '''
-                }
+                sh '''
+                # Example: copy WAR file to Tomcat server
+                cp target/myapp.war /opt/tomcat/webapps/
+                '''
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline finished!'
+        success {
+            echo 'Build and deployment successful!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs!'
         }
     }
 }
