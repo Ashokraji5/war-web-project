@@ -50,3 +50,6 @@ pipeline {
         }
     }
 }
+
+
+// sudo chown -R jenkins:jenkins /opt/tomcat9/webapps/
