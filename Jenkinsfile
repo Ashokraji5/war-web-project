@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'   // Name of Maven installation in Jenkins
+        maven 'maven'   // Name of Maven installation in Jenkins
         
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'https://github.com/your-username/your-java-repo.git'
+                git branch: 'master', url: 'https://github.com/Ashokraji5/war-web-project.git'
             }
         }
 
