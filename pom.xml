@@ -27,6 +27,7 @@
   
   <build>
     <plugins>
+      <!-- Compiler plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -35,6 +36,13 @@
           <source>1.7</source>
           <target>1.7</target>
         </configuration>
+      </plugin>
+
+      <!-- SonarQube Maven plugin -->
+      <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>3.9.1.2184</version>
       </plugin>
     </plugins>
   </build>
