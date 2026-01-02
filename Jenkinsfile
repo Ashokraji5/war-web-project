@@ -39,7 +39,14 @@ pipeline {
         stage('Code Quality - SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQubeServer') {
-                    sh "mvn sonar:sonar -s $MVN_SETTINGS"
+                    sh """
+                    sonar-scanner \
+                      -Dsonar.projectKey=myapp \
+                      -Dsonar.sources=src \
+                      -Dsonar.java.binaries=target/classes \
+                      -Dsonar.host.url=$SONAR_HOST_URL \
+                      -Dsonar.login=$SONARQUBE_TOKEN
+                    """
                 }
             }
         }
