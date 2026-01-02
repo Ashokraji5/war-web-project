@@ -19,7 +19,7 @@ pipeline {
                     IS_SNAPSHOT = VERSION.contains("SNAPSHOT")
                     NEXUS_REPO = IS_SNAPSHOT ? 'maven-snapshots' : 'jenkins-maven-release-role'
                     WAR_URL = "http://54.83.176.111:8081/repository/${NEXUS_REPO}/koddas/web/war/wwp/${VERSION}/wwp-${VERSION}.war"
-                    DOCKER_IMAGE = "${DOCKER_USERNAME}/myapp:${VERSION}"
+                    DOCKER_IMAGE = '${DOCKER_USERNAME}/myapp:${VERSION}'
                 }
             }
         }
@@ -32,21 +32,14 @@ pipeline {
 
         stage('Build & Test with Maven') {
             steps {
-                sh "mvn clean package -s $MVN_SETTINGS -DskipTests=false"
+                sh 'mvn clean package -s $MVN_SETTINGS -DskipTests=false'
             }
         }
 
         stage('Code Quality - SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQubeServer') {
-                    sh """
-                    sonar-scanner \
-                      -Dsonar.projectKey=myapp \
-                      -Dsonar.sources=src \
-                      -Dsonar.java.binaries=target/classes \
-                      -Dsonar.host.url=$SONAR_HOST_URL \
-                      -Dsonar.login=$SONARQUBE_TOKEN
-                    """
+                    sh 'mvn sonar:sonar -s $MVN_SETTINGS'
                 }
             }
         }
@@ -55,9 +48,9 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh "mvn deploy -s $MVN_SETTINGS"
+                        sh 'mvn deploy -s $MVN_SETTINGS'
                     } catch (err) {
-                        error "❌ Maven deploy failed: ${err}"
+                        error '❌ Maven deploy failed: ${err}'
                     }
                 }
             }
@@ -82,9 +75,9 @@ pipeline {
 
         stage('Docker Build Image from Nexus WAR') {
             steps {
-                sh """
+                sh '''
                 docker build --build-arg WAR_URL=$WAR_URL -t $DOCKER_IMAGE .
-                """
+                '''
             }
         }
 
@@ -100,7 +93,7 @@ pipeline {
     post {
         always {
             script {
-                def warFile = "target/wwp-${VERSION}.war"
+                def warFile = 'target/wwp-${VERSION}.war'
                 if (fileExists(warFile)) {
                     archiveArtifacts artifacts: warFile, fingerprint: true
                     echo "📦 WAR file archived: ${warFile}"
