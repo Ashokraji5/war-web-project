@@ -16,10 +16,10 @@ pipeline {
         stage('Initialize Variables') {
             steps {
                 script {
-                    IS_SNAPSHOT = VERSION.contains("SNAPSHOT")
-                    NEXUS_REPO = IS_SNAPSHOT ? 'maven-snapshots' : 'jenkins-maven-release-role'
-                    WAR_URL = "http://54.83.176.111:8081/repository/${NEXUS_REPO}/koddas/web/war/wwp/${VERSION}/wwp-${VERSION}.war"
-                    DOCKER_IMAGE = '${DOCKER_USERNAME}/myapp:${VERSION}'
+                    env.IS_SNAPSHOT = env.VERSION.contains("SNAPSHOT") ? "true" : "false"
+                    env.NEXUS_REPO = env.IS_SNAPSHOT == "true" ? "maven-snapshots" : "jenkins-maven-release-role"
+                    env.WAR_URL = "http://54.83.176.111:8081/repository/${env.NEXUS_REPO}/koddas/web/war/wwp/${env.VERSION}/wwp-${env.VERSION}.war"
+                    env.DOCKER_IMAGE = "${env.DOCKER_USERNAME}/myapp:${env.VERSION}"
                 }
             }
         }
@@ -32,14 +32,14 @@ pipeline {
 
         stage('Build & Test with Maven') {
             steps {
-                sh 'mvn clean package -s $MVN_SETTINGS -DskipTests=false'
+                sh "mvn clean package -s $MVN_SETTINGS -DskipTests=false"
             }
         }
 
         stage('Code Quality - SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQubeServer') {
-                    sh 'mvn sonar:sonar -s $MVN_SETTINGS'
+                    sh "mvn sonar:sonar -s $MVN_SETTINGS"
                 }
             }
         }
@@ -48,9 +48,9 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh 'mvn deploy -s $MVN_SETTINGS'
+                        sh "mvn deploy -s $MVN_SETTINGS"
                     } catch (err) {
-                        error '❌ Maven deploy failed: ${err}'
+                        error "❌ Maven deploy failed: ${err}"
                     }
                 }
             }
@@ -59,9 +59,9 @@ pipeline {
         stage('Validate WAR URL on Nexus') {
             steps {
                 script {
-                    def status = sh(script: "curl --silent --head --fail $WAR_URL", returnStatus: true)
+                    def status = sh(script: "curl --silent --head --fail ${env.WAR_URL}", returnStatus: true)
                     if (status != 0) {
-                        error "❌ WAR file not accessible at $WAR_URL"
+                        error "❌ WAR file not accessible at ${env.WAR_URL}"
                     }
                 }
             }
@@ -69,22 +69,22 @@ pipeline {
 
         stage('Download WAR from Nexus') {
             steps {
-                sh "mkdir -p target && curl -o target/wwp-${VERSION}.war $WAR_URL"
+                sh "mkdir -p target && curl -o target/wwp-${env.VERSION}.war ${env.WAR_URL}"
             }
         }
 
         stage('Docker Build Image from Nexus WAR') {
             steps {
-                sh '''
-                docker build --build-arg WAR_URL=$WAR_URL -t $DOCKER_IMAGE .
-                '''
+                sh """
+                docker build --build-arg WAR_URL=${env.WAR_URL} -t ${env.DOCKER_IMAGE} .
+                """
             }
         }
 
         stage('Push Docker Image to DockerHub') {
             steps {
                 withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
-                    sh "docker push $DOCKER_IMAGE"
+                    sh "docker push ${env.DOCKER_IMAGE}"
                 }
             }
         }
@@ -93,7 +93,7 @@ pipeline {
     post {
         always {
             script {
-                def warFile = 'target/wwp-${VERSION}.war'
+                def warFile = "target/wwp-${env.VERSION}.war"
                 if (fileExists(warFile)) {
                     archiveArtifacts artifacts: warFile, fingerprint: true
                     echo "📦 WAR file archived: ${warFile}"
