@@ -9,24 +9,24 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
         DOCKER_USERNAME = 'ashokraji'
-        VERSION = '1.0.0' // Change to '1.0.0-SNAPSHOT' for dev builds
+        VERSION = "1.0.${BUILD_NUMBER}"
     }
 
     stages {
-        stage('Initialize Variables') {
+        stage('Initialize variables') {
             steps {
                 script {
-                    env.IS_SNAPSHOT = env.VERSION.contains("SNAPSHOT") ? "true" : "false"
-                    env.NEXUS_REPO = env.IS_SNAPSHOT == "true" ? "maven-snapshots" : "jenkins-maven-release-role"
-                    env.WAR_URL = "http://54.83.176.111:8081/repository/${env.NEXUS_REPO}/koddas/web/war/wwp/${env.VERSION}/wwp-${env.VERSION}.war"
-                    env.DOCKER_IMAGE = "${env.DOCKER_USERNAME}/myapp:${env.VERSION}"
+                    IS_SNAPSHOT = VERSION.contains('SNAPSHOT')
+                    NEXUS_REPO = IS_SNAPSHOT ? 'snapshots' : 'releases'
+                    WAR_URL = "http://nexus.example.com/repository/${NEXUS_REPO}/com/example/app/${VERSION}/app-${VERSION}.war"
+                    DOCKER_IMAGE = "ashokraji/app:${VERSION}"
                 }
             }
         }
 
         stage('Checkout from GitHub') {
             steps {
-                git url: 'https://github.com/Ashokraji5/war-web-project.git', credentialsId: 'github-pat'
+                git branch: 'main', url: 'https://github.com/ashokraji/app.git'
             }
         }
 
@@ -38,30 +38,28 @@ pipeline {
 
         stage('Code Quality - SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQubeServer') {
-                    sh "mvn sonar:sonar -s $MVN_SETTINGS"
-                }
+                sh "mvn sonar:sonar -s $MVN_SETTINGS"
+            }
+        }
+
+        stage('Trivy Scan WAR') {
+            steps {
+                sh "trivy fs target/ --exit-code 1 --severity CRITICAL --output trivy-war-report.json"
             }
         }
 
         stage('Package & Upload WAR to Nexus') {
             steps {
-                script {
-                    try {
-                        sh "mvn deploy -s $MVN_SETTINGS"
-                    } catch (err) {
-                        error "❌ Maven deploy failed: ${err}"
-                    }
-                }
+                sh "mvn deploy -s $MVN_SETTINGS"
             }
         }
 
         stage('Validate WAR URL on Nexus') {
             steps {
                 script {
-                    def status = sh(script: "curl --silent --head --fail ${env.WAR_URL}", returnStatus: true)
+                    def status = sh(script: "curl --silent --head --fail $WAR_URL", returnStatus: true)
                     if (status != 0) {
-                        error "❌ WAR file not accessible at ${env.WAR_URL}"
+                        error "WAR file not found at ${WAR_URL}"
                     }
                 }
             }
@@ -69,22 +67,28 @@ pipeline {
 
         stage('Download WAR from Nexus') {
             steps {
-                sh "mkdir -p target && curl -o target/wwp-${env.VERSION}.war ${env.WAR_URL}"
+                sh "mkdir -p target && curl -o target/app.war $WAR_URL"
             }
         }
 
-        stage('Docker Build Image from Nexus WAR') {
+        stage('Docker Build Image from WAR') {
             steps {
                 sh """
-                docker build --build-arg WAR_URL=${env.WAR_URL} -t ${env.DOCKER_IMAGE} .
+                docker build --build-arg WAR_URL=$WAR_URL -t $DOCKER_IMAGE .
                 """
+            }
+        }
+
+        stage('Trivy Scan Docker Image') {
+            steps {
+                sh "trivy image $DOCKER_IMAGE --exit-code 1 --severity CRITICAL --output trivy-image-report.json"
             }
         }
 
         stage('Push Docker Image to DockerHub') {
             steps {
                 withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
-                    sh "docker push ${env.DOCKER_IMAGE}"
+                    sh "docker push $DOCKER_IMAGE"
                 }
             }
         }
@@ -92,15 +96,7 @@ pipeline {
 
     post {
         always {
-            script {
-                def warFile = "target/wwp-${env.VERSION}.war"
-                if (fileExists(warFile)) {
-                    archiveArtifacts artifacts: warFile, fingerprint: true
-                    echo "📦 WAR file archived: ${warFile}"
-                } else {
-                    echo "⚠️ WAR file not found for archiving: ${warFile}"
-                }
-            }
+            archiveArtifacts artifacts: "target/app.war", fingerprint: true
             cleanWs()
         }
     }
