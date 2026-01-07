@@ -37,10 +37,10 @@ pipeline {
         }
 
         stage('Code Quality - SonarQube Analysis') {
-            steps {
-                sh "mvn sonar:sonar -s $MVN_SETTINGS"
-            }
-        }
+             steps {
+               sh "mvn sonar:sonar -Dsonar.login=$SONARQUBE_TOKEN -s $MVN_SETTINGS"
+    }
+}
 
         stage('Trivy Scan WAR') {
             steps {
