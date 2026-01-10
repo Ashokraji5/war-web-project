@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'maven'   // use the Maven installation configured in Jenkins Global Tools
+    }
+
     environment {
         DOCKER_USERNAME = 'ashokraji'
         VERSION = "1.0.${BUILD_NUMBER}"   // expands build number correctly
