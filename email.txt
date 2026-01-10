@@ -122,6 +122,188 @@ pipeline {
 }
 
 
+# new jenkins file deployment 
+
+
+pipeline {
+    agent any
+
+    environment {
+        MAVEN_HOME = tool name: 'maven', type: 'maven'
+        PATH = "${MAVEN_HOME}/bin:${env.PATH}"
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
+        NEXUS_CREDENTIALS = credentials('nexus-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
+        DOCKER_USERNAME = 'ashokraji'
+        VERSION = "1.0.${BUILD_NUMBER}-SNAPSHOT"   // snapshot versioning
+    }
+
+    stages {
+        stage('Initialize variables') {
+            steps {
+                script {
+                    IS_SNAPSHOT = VERSION.contains('SNAPSHOT')
+                    NEXUS_REPO = IS_SNAPSHOT ? 'snapshots' : 'releases'
+                    WAR_URL = "http://nexus.example.com/repository/${NEXUS_REPO}/com/example/app/${VERSION}/app-${VERSION}.war"
+                    DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
+                }
+            }
+        }
+
+        stage('Checkout from GitHub') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/ashokraji/app.git',
+                    credentialsId: 'github-pat'
+            }
+        }
+
+        stage('Build & Test with Maven') {
+            steps {
+                sh "mvn clean package -s $MVN_SETTINGS -DskipTests=false"
+            }
+        }
+
+        stage('Code Quality - SonarQube Analysis') {
+            steps {
+                sh "mvn sonar:sonar -Dsonar.login=$SONARQUBE_TOKEN -s $MVN_SETTINGS"
+            }
+        }
+
+        stage('Trivy Scan WAR') {
+            steps {
+                sh "trivy fs target/ --exit-code 1 --severity HIGH,CRITICAL --output trivy-war-report.json"
+            }
+        }
+
+        stage('Package & Upload WAR to Nexus') {
+            steps {
+                sh "mvn deploy -s $MVN_SETTINGS"
+            }
+        }
+
+        stage('Validate WAR URL on Nexus') {
+            steps {
+                script {
+                    def status = sh(script: "curl --silent --head --fail $WAR_URL", returnStatus: true)
+                    if (status != 0) {
+                        error "WAR file not found at ${WAR_URL}"
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build Image from WAR') {
+            steps {
+                sh """
+                docker build --build-arg WAR_URL=$WAR_URL -t $DOCKER_IMAGE .
+                """
+            }
+        }
+
+        stage('Trivy Scan Docker Image') {
+            steps {
+                sh "trivy image $DOCKER_IMAGE --exit-code 1 --severity HIGH,CRITICAL --output trivy-image-report.json"
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
+                    sh "docker push $DOCKER_IMAGE"
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig-credentials']) {
+                    sh """
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply -f k8s/service.yaml
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: "target/app.war", fingerprint: true
+            cleanWs()
+        }
+    }
+}
+
+
+Dockerfile:
+
+
+FROM tomcat:9.0-jdk17
+ARG WAR_URL
+RUN curl -o /usr/local/tomcat/webapps/app.war $WAR_URL
+EXPOSE 8080
+CMD ["catalina.sh", "run"]
+
+
+Deployment (k8s/deployment.yaml):
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+  labels:
+    app: myapp
+spec:
+  replicas: 2   # 1 master schedules, 1 worker runs pods
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp-container
+        image: ashokraji/app:latest
+        ports:
+        - containerPort: 8080
+        imagePullPolicy: Always
+
+
+
+
+Service (k8s/service.yaml):
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+spec:
+  selector:
+    app: myapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: NodePort
+
+
+
+
+
+
+
+✅ Flow Recap
+- Jenkins builds WAR → runs SonarQube → scans with Trivy → uploads to Nexus.
+- WAR packaged into Docker image → scanned → pushed to DockerHub.
+- Kubernetes pulls image → deploys pods → exposes via Service.
+- Works fine on 1 master + 1 worker node for practice.
+
+👉 Do you want me to also show you a Helm chart version of this deployment? That’s often the next step in real DevOps teams, since Helm makes Kubernetes deployments more reusable and production-ready.
+
 
 
 
