@@ -1,16 +1,19 @@
-FROM tomcat:9.0-jdk17-temurin
+# Use official Tomcat base image with JDK
+FROM tomcat:9.0-jdk17-openjdk-slim
 
-ARG WAR_URL
-ENV WAR_URL=${WAR_URL}
+# Set working directory
+WORKDIR /usr/local/tomcat
 
-RUN set -e && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends wget && \
-    rm -rf /usr/local/tomcat/webapps/* && \
-    wget -O /usr/local/tomcat/webapps/ROOT.war ${WAR_URL} && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# Remove default ROOT application (optional, to avoid conflicts)
+RUN rm -rf webapps/ROOT
 
+# Copy your WAR file from Maven target folder into Tomcat webapps
+COPY target/*.war webapps/ROOT.war
+
+# Expose Tomcat default port
 EXPOSE 8080
+
+# Start Tomcat
 CMD ["catalina.sh", "run"]
 
 
