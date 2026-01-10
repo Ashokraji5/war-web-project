@@ -15,7 +15,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'master',
-                    url: 'https://github.com/ashokraji/myapp.git',
+                    url: 'https://github.com/Ashokraji5/war-web-project.git',
                     credentialsId: 'github-credentials'
             }
         }
