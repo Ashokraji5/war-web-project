@@ -2,20 +2,22 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven'   // use the Maven installation configured in Jenkins Global Tools
+        maven 'maven'
     }
 
     environment {
+        DOCKER_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKER_USERNAME = 'ashokraji'
-        VERSION = "1.0.${BUILD_NUMBER}"   // expands build number correctly
+        VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/Ashokraji5/war-web-project.git',
+                git branch: 'main',
+                    url: 'https://github.com/ashokraji/sample-app.git',
                     credentialsId: 'github-credentials'
             }
         }
@@ -23,6 +25,22 @@ pipeline {
         stage('Build with Maven') {
             steps {
                 sh 'mvn clean package -DskipTests=true'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh "mvn sonar:sonar -Dsonar.login=${SONARQUBE_TOKEN}"
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
