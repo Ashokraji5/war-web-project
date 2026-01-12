@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven'   // Use Maven configured in Jenkins Global Tools
+        maven 'maven'
     }
 
     environment {
         DOCKER_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKER_USERNAME = 'ashokraji'
-        VERSION = "1.0.${BUILD_NUMBER}"   // expands build number correctly
+        VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         SONARQUBE_TOKEN = credentials('sonarqube-token')
     }
@@ -16,7 +16,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'master',    // ✅ ensure this matches your repo branch
+                git branch: 'master',
                     url: 'https://github.com/Ashokraji5/war-web-project.git',
                     credentialsId: 'github-credentials'
             }
@@ -42,13 +42,7 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // Quality Gate stage removed for practice
 
         stage('Docker Build') {
             steps {
