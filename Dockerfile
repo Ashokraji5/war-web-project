@@ -1,19 +1,20 @@
-# Use official Tomcat base image with JDK
+# Use official Tomcat base image with JDK 17
 FROM tomcat:9.0-jdk17-openjdk-slim
 
-# Set working directory
+# Set working directory to Tomcat installation
 WORKDIR /usr/local/tomcat
 
-# Remove default ROOT application (optional, to avoid conflicts)
+# Remove default ROOT application to avoid conflicts
 RUN rm -rf webapps/ROOT
 
-# Copy your WAR file from Maven target folder into Tomcat webapps
+# Copy the WAR file built by Maven into Tomcat webapps
+# Jenkins pipeline builds the WAR in target/
 COPY target/*.war webapps/ROOT.war
 
 # Expose Tomcat default port
 EXPOSE 8080
 
-# Start Tomcat
+# Run Tomcat in foreground
 CMD ["catalina.sh", "run"]
 
 
