@@ -17,7 +17,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/ashokraji/sample-app.git',
+                    url: 'https://github.com/Ashokraji5/war-web-project.git',
                     credentialsId: 'github-credentials'
             }
         }
