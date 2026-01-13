@@ -47,7 +47,7 @@
     </plugins>
   </build>
 
-  <!-- Deployment to Nexus -->
+  <!-- Deployment to Nexus (tells Maven where to publish your Artifact .war or .jar-->
   <distributionManagement>
     <repository>
       <id>jenkins-maven-release-role</id> <!-- Must match server id in settings.xml -->
