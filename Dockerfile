@@ -1,4 +1,3 @@
-# Use official Tomcat base image with JDK 17
 FROM tomcat:9.0-jdk17-openjdk-slim
 
 # Set working directory to Tomcat installation
@@ -7,9 +6,9 @@ WORKDIR /usr/local/tomcat
 # Remove default ROOT application to avoid conflicts
 RUN rm -rf webapps/ROOT
 
-# Copy the WAR file built by Maven into Tomcat webapps
-# Jenkins pipeline builds the WAR in target/
-COPY target/*.war webapps/ROOT.war
+# Download the WAR file from Nexus repository
+# Replace URL with your Nexus repo path and artifact coordinates
+ADD https://<nexus-server>/repository/<repository-name>/<groupId>/<artifactId>/<version>/<artifactId>-<version>.war
 
 # Expose Tomcat default port
 EXPOSE 8080
