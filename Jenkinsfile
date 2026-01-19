@@ -11,6 +11,8 @@ pipeline {
         VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         SONARQUBE_TOKEN = credentials('sonarqube-token')
+        NEXUS_CREDENTIALS = credentials('nexus-credentials')
+        MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
     }
 
     stages {
@@ -42,7 +44,12 @@ pipeline {
             }
         }
 
-        // Quality Gate stage removed for practice
+        stage('Push Artifact to Nexus') {
+            steps {
+                // Deploys WAR to Nexus using pom.xml + settings.xml
+                sh "mvn deploy -s ${MVN_SETTINGS} -DskipTests=true"
+            }
+        }
 
         stage('Docker Build') {
             steps {
@@ -61,7 +68,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully. Image pushed: ${DOCKER_IMAGE}"
+            echo "✅ Pipeline completed successfully. WAR pushed to Nexus & Image pushed: ${DOCKER_IMAGE}"
         }
         failure {
             echo "❌ Pipeline failed. Please check logs."
