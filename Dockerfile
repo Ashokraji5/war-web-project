@@ -8,7 +8,8 @@ RUN rm -rf webapps/ROOT
 
 # Download the WAR file from Nexus repository
 # Replace URL with your Nexus repo path and artifact coordinates
-ADD https://<nexus-server>/repository/<repository-name>/<groupId>/<artifactId>/<version>/<artifactId>-<version>.war
+ADD http://54.243.6.64:8081/repository/jenkins-maven-release-role/koddas/web/war/wwp/1.0.0/wwp-1.0.0.war /usr/local/tomcat/webapps/app.war
+
 
 # Expose Tomcat default port
 EXPOSE 8080
