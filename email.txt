@@ -120,4 +120,5 @@ RUN set -e && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8080
-CMD ["catalina.sh", "run"]
+CMD ["catalina.sh", "run"]          
+
