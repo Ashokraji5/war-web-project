@@ -68,7 +68,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully. WAR pushed to Nexus & Image pushed: ${DOCKER_IMAGE}"
+            echo "✅ Pipeline completed successfully. WAR pushed to nexus img pushed: ${DOCKER_IMAGE}"
         }
         failure {
             echo "❌ Pipeline failed. Please check logs."
