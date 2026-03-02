@@ -13,7 +13,6 @@ pipeline {
         SONARQUBE_TOKEN = credentials('sonarqube-token')
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
-        SLACK_CHANNEL = '#devops-alerts'
     }
 
     stages {
@@ -96,10 +95,10 @@ pipeline {
 
     post {
         success {
-            slackSend(channel: SLACK_CHANNEL, message: "✅ Build ${BUILD_NUMBER} succeeded. Image: ${DOCKER_IMAGE}")
+            echo "✅ Build ${BUILD_NUMBER} succeeded. Image: ${DOCKER_IMAGE}"
         }
         failure {
-            slackSend(channel: SLACK_CHANNEL, message: "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs.")
+            echo "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs."
         }
     }
 }
