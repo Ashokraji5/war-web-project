@@ -51,37 +51,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy to Dev Environment') {
-            steps {
-                echo "Deploying ${DOCKER_IMAGE} to Dev environment..."
-                // Add a placeholder script in your repo: deploy-dev.sh
-                sh "./deploy-dev.sh ${DOCKER_IMAGE}"
-            }
-        }
-
-        stage('Deploy to QA Environment') {
-            when {
-                branch 'master'
-            }
-            steps {
-                echo "Deploying ${DOCKER_IMAGE} to QA environment..."
-                // Add a placeholder script in your repo: deploy-qa.sh
-                sh "./deploy-qa.sh ${DOCKER_IMAGE}"
-            }
-        }
-
-        stage('Deploy to Prod Environment') {
-            when {
-                branch 'master'
-            }
-            steps {
-                input message: "Approve deployment to Production?"
-                echo "Deploying ${DOCKER_IMAGE} to Production..."
-                // Add a placeholder script in your repo: deploy-prod.sh
-                sh "./deploy-prod.sh ${DOCKER_IMAGE}"
-            }
-        }
     }
 
     post {
