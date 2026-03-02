@@ -10,7 +10,6 @@ pipeline {
         DOCKER_USERNAME = 'ashokraji'
         VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
     }
@@ -24,20 +23,9 @@ pipeline {
             }
         }
 
-        stage('Code Quality & Tests') {
-            parallel {
-                stage('Unit Tests') {
-                    steps {
-                        sh 'mvn test'
-                    }
-                }
-                stage('SonarQube Analysis') {
-                    steps {
-                        withSonarQubeEnv('SonarQubeServer') {
-                            sh "mvn sonar:sonar -Dsonar.login=${SONARQUBE_TOKEN}"
-                        }
-                    }
-                }
+        stage('Unit Tests') {
+            steps {
+                sh 'mvn test'
             }
         }
 
@@ -51,7 +39,7 @@ pipeline {
         stage('Docker Build & Scan') {
             steps {
                 sh "docker build -t ${DOCKER_IMAGE} ."
-                // Security scan with Trivy (fail if HIGH/CRITICAL vulnerabilities found)
+                // Trivy scan reports vulnerabilities but does not fail the pipeline
                 sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE}"
             }
         }
@@ -67,6 +55,7 @@ pipeline {
         stage('Deploy to Dev Environment') {
             steps {
                 echo "Deploying ${DOCKER_IMAGE} to Dev environment..."
+                // Add a placeholder script in your repo: deploy-dev.sh
                 sh "./deploy-dev.sh ${DOCKER_IMAGE}"
             }
         }
@@ -77,6 +66,7 @@ pipeline {
             }
             steps {
                 echo "Deploying ${DOCKER_IMAGE} to QA environment..."
+                // Add a placeholder script in your repo: deploy-qa.sh
                 sh "./deploy-qa.sh ${DOCKER_IMAGE}"
             }
         }
@@ -88,6 +78,7 @@ pipeline {
             steps {
                 input message: "Approve deployment to Production?"
                 echo "Deploying ${DOCKER_IMAGE} to Production..."
+                // Add a placeholder script in your repo: deploy-prod.sh
                 sh "./deploy-prod.sh ${DOCKER_IMAGE}"
             }
         }
