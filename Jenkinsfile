@@ -38,7 +38,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBEsERVER}") {
+                withSonarQubeEnv('SonarQubeServer') {
                     sh "mvn sonar:sonar -DskipTests=true"
                 }
             }
