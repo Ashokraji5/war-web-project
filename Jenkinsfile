@@ -12,6 +12,7 @@ pipeline {
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
+        SONARQUBE_TOKEN = credentials('sonarqube-token')   // Jenkins SonarQube server config name
     }
 
     stages {
@@ -29,22 +30,29 @@ pipeline {
             }
         }
 
-        stage('Build & Deploy to Nexus') {
+        stage('Build WAR') {
             steps {
-                // Build WAR
                 sh "mvn clean package -DskipTests=true"
+            }
+        }
 
-                // Optional: deploy to Nexus
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBEsERVER}") {
+                    sh "mvn sonar:sonar -DskipTests=true"
+                }
+            }
+        }
+
+        stage('Deploy to Nexus') {
+            steps {
                 sh "mvn deploy -s ${MVN_SETTINGS} -DskipTests=true"
             }
         }
 
         stage('Docker Build & Scan') {
             steps {
-                // Build Docker image using WAR from target/
                 sh "docker build -t ${DOCKER_IMAGE} ."
-
-                // Scan for vulnerabilities
                 sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE}"
             }
         }
