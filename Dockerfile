@@ -15,8 +15,3 @@ EXPOSE 8080
 
 # Run Tomcat in foreground
 CMD ["catalina.sh", "run"]
-
-
-
-
-
