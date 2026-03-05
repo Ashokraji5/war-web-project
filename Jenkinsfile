@@ -31,15 +31,20 @@ pipeline {
 
         stage('Build & Deploy to Nexus') {
             steps {
+                // Build WAR
                 sh "mvn clean package -DskipTests=true"
+
+                // Optional: deploy to Nexus
                 sh "mvn deploy -s ${MVN_SETTINGS} -DskipTests=true"
             }
         }
 
         stage('Docker Build & Scan') {
             steps {
+                // Build Docker image using WAR from target/
                 sh "docker build -t ${DOCKER_IMAGE} ."
-                // Trivy scan reports vulnerabilities but does not fail the pipeline
+
+                // Scan for vulnerabilities
                 sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE}"
             }
         }
