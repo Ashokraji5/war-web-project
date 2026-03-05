@@ -1,17 +1,16 @@
+# Use official Tomcat 9 with JDK 17 slim
 FROM tomcat:9.0-jdk17-openjdk-slim
 
-# Set working directory to Tomcat installation
+# Set working directory
 WORKDIR /usr/local/tomcat
 
-# Remove default ROOT application to avoid conflicts
+# Remove default ROOT application
 RUN rm -rf webapps/ROOT
 
-# Download the WAR file from Nexus repository
-# Replace URL with your Nexus repo path and artifact coordinates
-ADD http://100.31.0.194:8081/repository/jenkins-maven-release-role/koddas/web/war/wwp/1.0.0/wwp-1.0.0.war /usr/local/tomcat/webapps/app.war
+# Copy WAR built by Maven from target directory
+COPY target/*.war /usr/local/tomcat/webapps/app.war
 
-
-# Expose Tomcat default port
+# Expose Tomcat port
 EXPOSE 8080
 
 # Run Tomcat in foreground
