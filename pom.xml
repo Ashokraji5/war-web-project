@@ -27,14 +27,14 @@
   
   <build>
     <plugins>
-      <!-- Compiler plugin -->
+      <!-- Updated Compiler plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
+        <version>3.8.1</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>11</source>   <!-- Use 11 or 17 depending on your runtime -->
+          <target>11</target>
         </configuration>
       </plugin>
 
@@ -47,10 +47,9 @@
     </plugins>
   </build>
 
-  <!-- Deployment to Nexus (tells Maven where to publish your Artifact .war or .jar-->
   <distributionManagement>
     <repository>
-      <id>jenkins-maven-release-role</id> <!-- Must match server id in settings.xml -->
+      <id>jenkins-maven-release-role</id>
       <name>Nexus Releases</name>
       <url>http://54.242.76.128:8081/repository/jenkins-maven-release-role/</url>
     </repository>
