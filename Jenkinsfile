@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'maven' }   // run all stages on the slave with label 'maven'
 
     tools {
         maven 'maven'
@@ -12,7 +12,7 @@ pipeline {
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
-        SONARQUBE_TOKEN = credentials('sonarqube-token')   // Jenkins SonarQube server config name
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
     }
 
     stages {
