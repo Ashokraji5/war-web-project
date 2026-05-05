@@ -170,7 +170,10 @@ pipeline {
 
         stage('Docker Build & Scan') {
             steps {
+                // Build Docker image using WAR (downloaded from Artifactory or copied from target)
                 sh "docker build -t ${DOCKER_IMAGE} ."
+
+                // Scan image with Trivy for HIGH/CRITICAL vulnerabilities
                 sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE}"
             }
         }
@@ -186,11 +189,12 @@ pipeline {
 
     post {
         success {
-            echo "✅ Build ${BUILD_NUMBER} succeeded. Image: ${DOCKER_IMAGE}"
+            echo "✅ Build ${BUILD_NUMBER} succeeded. Image pushed: ${DOCKER_IMAGE}"
         }
         failure {
             echo "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs."
         }
     }
 }
+
 
