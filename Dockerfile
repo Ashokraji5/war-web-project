@@ -8,7 +8,7 @@ WORKDIR /usr/local/tomcat
 RUN rm -rf webapps/ROOT
 
 # Copy WAR built by Maven from target directory
-COPY target/*.war /usr/local/tomcat/webapps/app.war
+COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
 
 # Expose Tomcat port
 EXPOSE 8080
