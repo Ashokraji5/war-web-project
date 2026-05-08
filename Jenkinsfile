@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'maven' }   // run all stages on the slave with label 'maven'
+    agent any  // run all stages on the slave with label 'maven'
 
     tools {
         maven 'maven'
