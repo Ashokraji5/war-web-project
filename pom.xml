@@ -51,7 +51,7 @@
     <repository>
       <id>jenkins-maven-release-role</id>
       <name>Nexus Releases</name>
-      <url>http://13.220.227.216:8081/repository/jenkins-maven-release-role/</url>
+      <url>http://54.209.251.82:8081/repository/jenkins-maven-release-role/</url>
     </repository>
   </distributionManagement>
 </project>
