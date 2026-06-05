@@ -2,15 +2,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  
+
   <groupId>koddas.web.war</groupId>
   <artifactId>wwp</artifactId>
   <version>1.0.0</version>
   <packaging>war</packaging>
-  
+
   <name>WAR Web Project</name>
   <description>A very simple Maven-enabled WAR web project</description>
-  
+
   <dependencies>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -24,21 +24,21 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-  
+
   <build>
     <plugins>
-      <!-- Updated Compiler plugin -->
+      <!-- Compiler plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <source>11</source>   <!-- Use 11 or 17 depending on your runtime -->
+          <source>11</source>   <!-- Use 11 or 17 depending on runtime -->
           <target>11</target>
         </configuration>
       </plugin>
 
-      <!-- SonarQube Maven plugin -->
+      <!-- Optional: SonarQube plugin -->
       <plugin>
         <groupId>org.sonarsource.scanner.maven</groupId>
         <artifactId>sonar-maven-plugin</artifactId>
@@ -47,6 +47,7 @@
     </plugins>
   </build>
 
+  <!-- Nexus deployment configuration -->
   <distributionManagement>
     <repository>
       <id>jenkins-maven-release-role</id>
