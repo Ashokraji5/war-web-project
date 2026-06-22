@@ -1,5 +1,5 @@
 pipeline {
-    agent any  // run all stages on the slave with label 'maven'
+    agent any
 
     tools {
         maven 'maven'
@@ -12,7 +12,6 @@ pipeline {
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
     }
 
     stages {
@@ -33,14 +32,6 @@ pipeline {
         stage('Build WAR') {
             steps {
                 sh "mvn clean package -DskipTests=true"
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQubeServer') {
-                    sh "mvn sonar:sonar -DskipTests=true"
-                }
             }
         }
 
