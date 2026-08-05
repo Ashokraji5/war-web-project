@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'maven' }
 
     tools {
         maven 'maven'
@@ -23,9 +23,11 @@ pipeline {
             }
         }
 
-        stage('Static Code Analysis') {
+        stage('SonarQube Analysis') {
             steps {
-                sh "mvn verify sonar:sonar -DskipTests=true"
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh "mvn sonar:sonar -DskipTests=true -s ${MVN_SETTINGS}"
+                }
             }
         }
 
@@ -80,14 +82,6 @@ pipeline {
                 sh "curl --fail http://localhost:8080 || exit 1"
             }
         }
-
-        stage('Notify') {
-            steps {
-                slackSend(channel: '#devops-builds', 
-                          color: 'good', 
-                          message: "✅ Build ${BUILD_NUMBER} succeeded. Image: ${DOCKER_IMAGE}")
-            }
-        }
     }
 
     post {
@@ -96,9 +90,6 @@ pipeline {
         }
         failure {
             echo "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs."
-            slackSend(channel: '#devops-builds', 
-                      color: 'danger', 
-                      message: "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs.")
         }
     }
 }
