@@ -12,7 +12,7 @@ pipeline {
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
-        // NVD_API_KEY = credentials('nvd-api-key') // Uncomment when API key is ready
+        NVD_API_KEY = credentials('nvd-api-key') // Securely stored in Jenkins
     }
 
     stages {
@@ -32,14 +32,13 @@ pipeline {
             }
         }
 
-        // Dependency Scan temporarily disabled until NVD API key is configured
-        // stage('Dependency Scan') {
-        //     steps {
-        //         withEnv(["NVD_API_KEY=${NVD_API_KEY}"]) {
-        //             sh "mvn org.owasp:dependency-check-maven:check"
-        //         }
-        //     }
-        // }
+        stage('Dependency Scan') {
+            steps {
+                withEnv(["NVD_API_KEY=${NVD_API_KEY}"]) {
+                    sh "mvn org.owasp:dependency-check-maven:check"
+                }
+            }
+        }
 
         stage('Unit Tests') {
             steps {
