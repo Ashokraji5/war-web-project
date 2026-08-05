@@ -31,11 +31,12 @@ pipeline {
             }
         }
 
-        stage('Dependency Scan') {
-            steps {
-                sh "mvn org.owasp:dependency-check-maven:check"
-            }
-        }
+        // Dependency Scan temporarily disabled until NVD API key is configured
+        // stage('Dependency Scan') {
+        //     steps {
+        //         sh "mvn org.owasp:dependency-check-maven:check"
+        //     }
+        // }
 
         stage('Unit Tests') {
             steps {
