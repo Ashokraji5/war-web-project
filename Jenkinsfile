@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'maven' }
+    agent any
 
     tools {
         maven 'maven'
@@ -23,9 +23,27 @@ pipeline {
             }
         }
 
+        stage('Static Code Analysis') {
+            steps {
+                sh "mvn verify sonar:sonar -DskipTests=true"
+            }
+        }
+
+        stage('Dependency Scan') {
+            steps {
+                sh "mvn org.owasp:dependency-check-maven:check"
+            }
+        }
+
         stage('Unit Tests') {
             steps {
                 sh 'mvn test'
+            }
+        }
+
+        stage('Integration Tests') {
+            steps {
+                sh "mvn verify -Pintegration-tests"
             }
         }
 
@@ -55,6 +73,21 @@ pipeline {
                 }
             }
         }
+
+        stage('Smoke Test Container') {
+            steps {
+                sh "docker run --rm -d -p 8080:8080 ${DOCKER_IMAGE}"
+                sh "curl --fail http://localhost:8080 || exit 1"
+            }
+        }
+
+        stage('Notify') {
+            steps {
+                slackSend(channel: '#devops-builds', 
+                          color: 'good', 
+                          message: "✅ Build ${BUILD_NUMBER} succeeded. Image: ${DOCKER_IMAGE}")
+            }
+        }
     }
 
     post {
@@ -63,6 +96,9 @@ pipeline {
         }
         failure {
             echo "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs."
+            slackSend(channel: '#devops-builds', 
+                      color: 'danger', 
+                      message: "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs.")
         }
     }
 }
