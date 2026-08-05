@@ -11,7 +11,6 @@ pipeline {
         VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
     }
 
@@ -24,10 +23,10 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Compile & SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQubeServer') {
-                    sh "mvn sonar:sonar -DskipTests=true -s ${MVN_SETTINGS}"
+                    sh "mvn clean compile sonar:sonar -DskipTests=true -s ${MVN_SETTINGS} -Dsonar.java.binaries=target/classes"
                 }
             }
         }
@@ -52,7 +51,7 @@ pipeline {
 
         stage('Build WAR') {
             steps {
-                sh "mvn clean package -DskipTests=true"
+                sh "mvn package -DskipTests=true"
             }
         }
 
