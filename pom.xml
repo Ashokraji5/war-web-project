@@ -45,12 +45,13 @@
         <version>3.9.1.2184</version>
       </plugin>
 
-      <!-- OWASP Dependency-Check plugin (disabled until NVD API key is configured) -->
+      <!-- OWASP Dependency-Check plugin -->
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
         <version>12.1.0</version>
         <configuration>
+          <!-- API key injected from Jenkins -->
           <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
           <failBuildOnCVSS>7</failBuildOnCVSS>
           <formats>HTML,XML</formats>
