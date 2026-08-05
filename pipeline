@@ -1,5 +1,5 @@
 pipeline {
-    agent any  // run all stages on the slave with label 'maven'
+    agent any
 
     tools {
         maven 'maven'
@@ -12,7 +12,6 @@ pipeline {
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
     }
 
     stages {
@@ -24,23 +23,35 @@ pipeline {
             }
         }
 
+        stage('Compile & SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh "mvn clean compile sonar:sonar -DskipTests=true -s ${MVN_SETTINGS} -Dsonar.java.binaries=target/classes"
+                }
+            }
+        }
+
+        stage('Dependency Scan') {
+            steps {
+                sh "mvn org.owasp:dependency-check-maven:check"
+            }
+        }
+
         stage('Unit Tests') {
             steps {
                 sh 'mvn test'
             }
         }
 
-        stage('Build WAR') {
+        stage('Integration Tests') {
             steps {
-                sh "mvn clean package -DskipTests=true"
+                sh "mvn verify -Pintegration-tests"
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Build WAR') {
             steps {
-                withSonarQubeEnv('SonarQubeServer') {
-                    sh "mvn sonar:sonar -DskipTests=true"
-                }
+                sh "mvn package -DskipTests=true"
             }
         }
 
@@ -50,10 +61,9 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Scan') {
+        stage('Docker Build') {
             steps {
                 sh "docker build -t ${DOCKER_IMAGE} ."
-                sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE}"
             }
         }
 
@@ -62,6 +72,13 @@ pipeline {
                 withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
                     sh "docker push ${DOCKER_IMAGE}"
                 }
+            }
+        }
+
+        stage('Smoke Test Container') {
+            steps {
+                sh "docker run --rm -d -p 8080:8080 ${DOCKER_IMAGE}"
+                sh "curl --fail http://localhost:8080 || exit 1"
             }
         }
     }
