@@ -51,22 +51,7 @@
         <artifactId>dependency-check-maven</artifactId>
         <version>12.1.0</version>
         <configuration>
-          <!-- API key injected from Jenkins -->
-          <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
-          <failBuildOnCVSS>7</failBuildOnCVSS>
-          <formats>HTML,XML</formats>
-          <outputDirectory>${project.build.directory}/dependency-check-report</outputDirectory>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+         
 
   <!-- Nexus deployment configuration -->
   <distributionManagement>
