@@ -11,6 +11,7 @@ pipeline {
         VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
         NEXUS_CREDENTIALS = credentials('nexus-credentials')
+        SONARQUBE_TOKEN = credentials('sonarqube-token'
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
     }
 
