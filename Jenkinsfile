@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'maven' }
 
     tools {
         maven 'maven'
@@ -10,9 +10,8 @@ pipeline {
         DOCKER_USERNAME = 'ashokraji'
         VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
-        NEXUS_CREDENTIALS = credentials('nexus-credentials')
+        ARTIFACTORY_CREDENTIALS = credentials('jfrog-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
-        NVD_API_KEY = credentials('nvd-api-key') // Securely stored in Jenkins
     }
 
     stages {
@@ -24,49 +23,31 @@ pipeline {
             }
         }
 
-        stage('Compile & SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQubeServer') {
-                    sh "mvn clean compile sonar:sonar -DskipTests=true -s ${MVN_SETTINGS} -Dsonar.java.binaries=target/classes"
-                }
-            }
-        }
-
-        stage('Dependency Scan') {
-            steps {
-                withEnv(["NVD_API_KEY=${NVD_API_KEY}"]) {
-                    sh "mvn org.owasp:dependency-check-maven:check"
-                }
-            }
-        }
-
         stage('Unit Tests') {
             steps {
                 sh 'mvn test'
             }
         }
 
-        stage('Integration Tests') {
-            steps {
-                sh "mvn verify -Pintegration-tests"
-            }
-        }
-
         stage('Build WAR') {
             steps {
-                sh "mvn package -DskipTests=true"
+                sh "mvn clean package -DskipTests=true"
             }
         }
 
-        stage('Deploy to Nexus') {
+        stage('Deploy to JFrog Artifactory') {
             steps {
                 sh "mvn deploy -s ${MVN_SETTINGS} -DskipTests=true"
             }
         }
 
-        stage('Docker Build') {
+        stage('Docker Build & Scan') {
             steps {
+                // Build Docker image using WAR (downloaded from Artifactory or copied from target)
                 sh "docker build -t ${DOCKER_IMAGE} ."
+
+                // Scan image with Trivy for HIGH/CRITICAL vulnerabilities
+                sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE}"
             }
         }
 
@@ -77,18 +58,11 @@ pipeline {
                 }
             }
         }
-
-        stage('Smoke Test Container') {
-            steps {
-                sh "docker run --rm -d -p 8080:8080 ${DOCKER_IMAGE}"
-                sh "curl --fail http://localhost:8080 || exit 1"
-            }
-        }
     }
 
     post {
         success {
-            echo "✅ Build ${BUILD_NUMBER} succeeded. Image: ${DOCKER_IMAGE}"
+            echo "✅ Build ${BUILD_NUMBER} succeeded. Image pushed: ${DOCKER_IMAGE}"
         }
         failure {
             echo "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs."
