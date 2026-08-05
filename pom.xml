@@ -12,6 +12,7 @@
   <description>A very simple Maven-enabled WAR web project</description>
 
   <dependencies>
+    <!-- Example dependencies -->
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
@@ -33,16 +34,37 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <source>11</source>   <!-- Use 11 or 17 depending on runtime -->
+          <source>11</source>
           <target>11</target>
         </configuration>
       </plugin>
 
-      <!-- Optional: SonarQube plugin -->
+      <!-- SonarQube plugin -->
       <plugin>
         <groupId>org.sonarsource.scanner.maven</groupId>
         <artifactId>sonar-maven-plugin</artifactId>
         <version>3.9.1.2184</version>
+      </plugin>
+
+      <!-- OWASP Dependency-Check plugin -->
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>8.4.0</version>
+        <configuration>
+          <!-- Pass NVD API key via environment variable -->
+          <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+          <failBuildOnCVSS>7</failBuildOnCVSS>
+          <formats>HTML,XML</formats>
+          <outputDirectory>${project.build.directory}/dependency-check-report</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
