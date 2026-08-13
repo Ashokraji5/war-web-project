@@ -1,0 +1,46 @@
+stages:
+  - checkout
+  - test
+  - build
+  - deploy
+  - docker
+  - push
+
+variables:
+  DOCKER_USERNAME: "ashokraji"
+  VERSION: "1.0.$CI_PIPELINE_IID"
+  DOCKER_IMAGE: "$DOCKER_USERNAME/app:$VERSION"
+  MVN_SETTINGS: "/root/.m2/settings.xml"
+
+checkout:
+  stage: checkout
+  script:
+    - git clone https://github.com/Ashokraji5/war-web-project.git
+    - cd war-web-project
+
+unit_tests:
+  stage: test
+  script:
+    - mvn test
+
+build_war:
+  stage: build
+  script:
+    - mvn clean package -DskipTests=true
+
+upload_nexus:
+  stage: deploy
+  script:
+    - mvn deploy -s $MVN_SETTINGS -DskipTests=true
+
+docker_build:
+  stage: docker
+  script:
+    - docker build -t $DOCKER_IMAGE .
+    - trivy image --exit-code 0 --severity HIGH,CRITICAL $DOCKER_IMAGE
+
+docker_push:
+  stage: push
+  script:
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - docker push $DOCKER_IMAGE
