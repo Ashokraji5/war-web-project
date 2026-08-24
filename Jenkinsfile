@@ -10,7 +10,7 @@ pipeline {
         DOCKER_USERNAME = 'ashokraji'
         VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
-        ARTIFACTORY_CREDENTIALS = credentials('jfrog-credentials')
+        NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
     }
 
