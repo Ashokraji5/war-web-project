@@ -60,7 +60,7 @@
   <!-- Nexus deployment configuration -->
   <distributionManagement>
     <repository>
-      <id>jenkins-maven-release-role</id>
+      <id>jenkins-maven-release-roles</id>
       <name>Nexus Releases</name>
       <url>http://100.48.20.143:8081/repository/jenkins-maven-release-roles/</url>
     </repository>
