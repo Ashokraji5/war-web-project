@@ -35,7 +35,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to JFrog Artifactory') {
+        stage('Deploy to nexus Artifactory') {
             steps {
                 sh "mvn deploy -s ${MVN_SETTINGS} -DskipTests=true"
             }
