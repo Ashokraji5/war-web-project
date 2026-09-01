@@ -15,12 +15,12 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.10.1</version> <!-- updated version -->
+      <version>2.10.1</version>
     </dependency>
     <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
-      <version>2.1.1</version> <!-- updated version -->
+      <version>2.1.1</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
@@ -59,10 +59,16 @@
 
   <!-- Nexus deployment configuration -->
   <distributionManagement>
+    <!-- Release repository -->
     <repository>
-      <id>jenkins-maven-release-role</id>
-      <name>Nexus Releases</name>
+      <id>jenkins-releases</id>
       <url>http://34.204.171.195:8081/repository/jenkins-maven-release-role/</url>
     </repository>
+
+    <!-- Snapshot repository (optional, only if you create one in Nexus) -->
+    <snapshotRepository>
+      <id>jenkins-snapshots</id>
+      <url>http://34.204.171.195:8081/repository/jenkins-maven-snapshot-role/</url>
+    </snapshotRepository>
   </distributionManagement>
 </project>
