@@ -6,20 +6,29 @@ pipeline {
     }
 
     environment {
-        DOCKER_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKER_USERNAME = 'ashokraji'
         VERSION = "1.0.${BUILD_NUMBER}"
         DOCKER_IMAGE = "${DOCKER_USERNAME}/app:${VERSION}"
-        NEXUS_CREDENTIALS = credentials('nexus-credentials')
         MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml'
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 git branch: 'master',
                     url: 'https://github.com/Ashokraji5/war-web-project.git',
                     credentialsId: 'github-credentials'
+            }
+        }
+
+        stage('Set Maven Version') {
+            steps {
+                sh '''
+                    mvn versions:set \
+                        -DnewVersion=${VERSION} \
+                        -DgenerateBackupPoms=false
+                '''
             }
         }
 
@@ -31,29 +40,39 @@ pipeline {
 
         stage('Build WAR') {
             steps {
-                sh "mvn clean package -DskipTests=true"
+                sh 'mvn clean package -DskipTests=true'
             }
         }
 
-        stage('Deploy to nexus Artifactory') {
+        stage('Deploy to Nexus') {
             steps {
-                sh "mvn deploy -s ${MVN_SETTINGS} -DskipTests=true"
+                sh '''
+                    mvn deploy \
+                        -s ${MVN_SETTINGS} \
+                        -DskipTests=true
+                '''
             }
         }
 
         stage('Docker Build & Scan') {
             steps {
-                // Build Docker image using WAR (downloaded from Artifactory or copied from target)
                 sh "docker build -t ${DOCKER_IMAGE} ."
 
-                // Scan image with Trivy for HIGH/CRITICAL vulnerabilities
-                sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE}"
+                sh """
+                    trivy image \
+                    --exit-code 0 \
+                    --severity HIGH,CRITICAL \
+                    ${DOCKER_IMAGE}
+                """
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
+                withDockerRegistry([
+                    credentialsId: 'dockerhub-credentials',
+                    url: ''
+                ]) {
                     sh "docker push ${DOCKER_IMAGE}"
                 }
             }
@@ -62,10 +81,13 @@ pipeline {
 
     post {
         success {
-            echo "✅ Build ${BUILD_NUMBER} succeeded. Image pushed: ${DOCKER_IMAGE}"
+            echo "Build ${BUILD_NUMBER} succeeded."
+            echo "Maven version: ${VERSION}"
+            echo "Docker image: ${DOCKER_IMAGE}"
         }
+
         failure {
-            echo "❌ Build ${BUILD_NUMBER} failed. Check Jenkins logs."
+            echo "Build ${BUILD_NUMBER} failed. Check Jenkins logs."
         }
     }
 }
