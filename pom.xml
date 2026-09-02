@@ -1,92 +1,56 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <modelVersion>4.0.0</modelVersion>
+  <!-- Project coordinates -->
+  <groupId>koddas.web.war</groupId>
+  <artifactId>wwp</artifactId>
+  <version>1.0.0</version>
+  <packaging>war</packaging>
 
-    <!-- Project Information -->
-    <groupId>koddas.web.war</groupId>
-    <artifactId>wwp</artifactId>
-    <version>1.0.0</version>
-    <packaging>war</packaging>
+  <name>WAR Web Project</name>
+  <description>A simple Maven-enabled WAR web project</description>
 
-    <name>wwp</name>
-    <description>WAR Web Project</description>
+  <!-- Dependencies -->
+  <dependencies>
+    <!-- JSON library -->
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.10.1</version>
+    </dependency>
 
-    <!-- Java Configuration -->
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <!-- JAX-RS API -->
+    <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+      <version>2.1.1</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
 
-    <!-- Dependencies -->
-    <dependencies>
+  <!-- Build plugins -->
+  <build>
+    <plugins>
+      <!-- Compiler plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
-        <!-- Gson -->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10.1</version>
-        </dependency>
-
-        <!-- JAX-RS API -->
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.1.1</version>
-            <scope>provided</scope>
-        </dependency>
-
-    </dependencies>
-
-    <!-- Build Configuration -->
-    <build>
-        <plugins>
-
-            <!-- Maven Compiler -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-            </plugin>
-
-            <!-- SonarQube -->
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.9.1.2184</version>
-            </plugin>
-
-            <!-- OWASP Dependency Check -->
-            <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>12.1.0</version>
-                <configuration>
-                    <failBuildOnCVSS>7</failBuildOnCVSS>
-                </configuration>
-            </plugin>
-
-        </plugins>
-    </build>
-
-    <!-- Nexus Repository Configuration -->
-    <distributionManagement>
-
-        <!-- Release Repository -->
-        <repository>
-            <id>jenkins-releases</id>
-            <url>http://100.27.251.136:8081/repository/jenkins-maven-release-role/</url>
-        </repository>
-
-        <!-- Snapshot Repository -->
-        <snapshotRepository>
-            <id>jenkins-snapshots</id>
-            <url>http://100.27.251.136:8081/repository/jenkins-maven-snapshot-role/</url>
-        </snapshotRepository>
-
-    </distributionManagement>
-
+  <!-- Nexus deployment configuration -->
+  <distributionManagement>
+    <repository>
+      <id>jenkins-releases</id>
+      <url>http://100.27.251.136:8081/repository/jenkins-maven-release-role/</url>
+    </repository>
+  </distributionManagement>
 </project>
