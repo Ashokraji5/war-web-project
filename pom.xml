@@ -5,37 +5,30 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <!-- Maven Model -->
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Project Coordinates -->
     <groupId>koddas.web.war</groupId>
     <artifactId>wwp</artifactId>
     <version>1.0.0</version>
     <packaging>war</packaging>
 
-    <!-- Project Information -->
     <name>wwp</name>
     <description>WAR Web Project</description>
 
-    <!-- Java Configuration -->
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <!-- Dependencies -->
     <dependencies>
 
-        <!-- Gson JSON Library -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
 
-        <!-- JAX-RS API -->
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
@@ -45,29 +38,21 @@
 
     </dependencies>
 
-    <!-- Build Configuration -->
     <build>
         <plugins>
 
-            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
-                <configuration>
-                    <source>11</source>
-                    <target>11</target>
-                </configuration>
             </plugin>
 
-            <!-- SonarQube Maven Plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.9.1.2184</version>
             </plugin>
 
-            <!-- OWASP Dependency Check -->
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
@@ -80,20 +65,15 @@
         </plugins>
     </build>
 
-    <!-- Nexus Repository Configuration -->
     <distributionManagement>
 
-        <!-- Release Repository -->
         <repository>
             <id>jenkins-releases</id>
-            <name>Jenkins Releases</name>
             <url>http://100.27.251.136:8081/repository/jenkins-maven-release-role/</url>
         </repository>
 
-        <!-- Snapshot Repository -->
         <snapshotRepository>
             <id>jenkins-snapshots</id>
-            <name>Jenkins Snapshots</name>
             <url>http://100.27.251.136:8081/repository/jenkins-maven-snapshot-role/</url>
         </snapshotRepository>
 
