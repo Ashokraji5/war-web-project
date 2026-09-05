@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'maven' }
 
     tools {
         maven 'maven'
@@ -44,7 +44,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to Nexus') {
+        stage('Deploy WAR to Nexus') {
             steps {
                 sh '''
                     mvn deploy \
@@ -54,16 +54,23 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Scan') {
+        stage('Docker Build') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE} ."
+                sh '''
+                    docker build \
+                        -t ${DOCKER_IMAGE} .
+                '''
+            }
+        }
 
-                sh """
+        stage('Trivy Security Scan') {
+            steps {
+                sh '''
                     trivy image \
-                    --exit-code 0 \
-                    --severity HIGH,CRITICAL \
-                    ${DOCKER_IMAGE}
-                """
+                        --severity HIGH,CRITICAL \
+                        --exit-code 0 \
+                        ${DOCKER_IMAGE}
+                '''
             }
         }
 
@@ -73,7 +80,7 @@ pipeline {
                     credentialsId: 'dockerhub-credentials',
                     url: ''
                 ]) {
-                    sh "docker push ${DOCKER_IMAGE}"
+                    sh 'docker push ${DOCKER_IMAGE}'
                 }
             }
         }
@@ -83,6 +90,7 @@ pipeline {
         success {
             echo "Build ${BUILD_NUMBER} succeeded."
             echo "Maven version: ${VERSION}"
+            echo "WAR: wwp-${VERSION}.war"
             echo "Docker image: ${DOCKER_IMAGE}"
         }
 
